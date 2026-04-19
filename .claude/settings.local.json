@@ -1,0 +1,9 @@
+{
+  "spinnerTipsEnabled": false,
+  "prefersReducedMotion": false,
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\msys64\\\\ucrt64\\\\bin\\\\g++.exe\" --version)"
+    ]
+  }
+}

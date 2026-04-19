@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFA String Acceptance Visualization</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+  h1 { text-align: center; padding: 18px; font-size: 1.5rem; color: #a0c4ff; letter-spacing: 1px; border-bottom: 1px solid #333; }
+  .container { display: flex; gap: 16px; padding: 16px; flex-wrap: wrap; }
+
+  /* Left panel: DFA definition */
+  .panel { background: #16213e; border-radius: 10px; padding: 16px; }
+  .panel-left { flex: 0 0 320px; }
+  .panel-main { flex: 1; min-width: 340px; }
+
+  label { font-size: 0.82rem; color: #a0c4ff; display: block; margin-bottom: 4px; }
+  input, textarea, select {
+    width: 100%; background: #0f3460; border: 1px solid #444; border-radius: 6px;
+    color: #eee; padding: 6px 10px; font-size: 0.85rem; margin-bottom: 10px;
+  }
+  textarea { resize: vertical; font-family: monospace; font-size: 0.8rem; }
+  button {
+    padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-primary { background: #4cc9f0; color: #000; }
+  .btn-primary:hover { background: #72d7f5; }
+  .btn-success { background: #80ed99; color: #000; }
+  .btn-success:hover { background: #a0f0b4; }
+  .btn-warning { background: #f4a261; color: #000; }
+  .btn-warning:hover { background: #f7b683; }
+  .btn-danger { background: #e63946; color: #fff; }
+  .btn-reset { background: #555; color: #fff; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+
+  /* Canvas area */
+  #canvas-wrap { position: relative; overflow: hidden; background: #0a0a1a; border-radius: 8px; border: 1px solid #333; }
+  canvas { display: block; }
+
+  /* Step info */
+  #step-info { margin-top: 10px; background: #0f3460; border-radius: 8px; padding: 12px; min-height: 80px; }
+  #step-info .symbol-row { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+  .sym-cell {
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; font-weight: bold; font-size: 1rem;
+    background: #1a2a4a; border: 2px solid #333;
+    transition: all 0.3s;
+  }
+  .sym-cell.done  { background: #1a4a2a; border-color: #80ed99; color: #80ed99; }
+  .sym-cell.current { background: #4a2a1a; border-color: #f4a261; color: #f4a261; transform: scale(1.15); }
+  .sym-cell.pending { opacity: 0.5; }
+  #msg { font-size: 0.9rem; margin-top: 6px; }
+  .accept { color: #80ed99; font-weight: bold; }
+  .reject { color: #e63946; font-weight: bold; }
+  .info   { color: #a0c4ff; }
+
+  #trace-log { margin-top: 10px; background: #0a0a1a; border-radius: 8px; padding: 10px;
+    font-family: monospace; font-size: 0.8rem; max-height: 140px; overflow-y: auto; }
+  #trace-log div { padding: 2px 0; border-bottom: 1px solid #1a1a2e; }
+
+  .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+    color: #666; margin-bottom: 6px; margin-top: 2px; }
+  .speed-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .speed-row label { margin: 0; flex: 0 0 auto; }
+  input[type=range] { padding: 0; margin: 0; height: 4px; flex: 1; }
+</style>
+</head>
+<body>
+<h1>DFA String Acceptance — Step-by-Step Visualization</h1>
+
+<div class="container">
+  <!-- Left: definition panel -->
+  <div class="panel panel-left">
+    <div class="section-title">DFA Definition</div>
+    <label>Alphabet (space-separated)</label>
+    <input type="text" id="alpha-input" value="a b" />
+
+    <label>Transitions (one per line: from symbol to)</label>
+    <textarea id="trans-input" rows="8">0 a 1
+0 b 0
+1 a 1
+1 b 2
+2 a 1
+2 b 0</textarea>
+
+    <label>Initial State</label>
+    <input type="text" id="init-input" value="0" />
+
+    <label>Final States (space-separated)</label>
+    <input type="text" id="final-input" value="2" />
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="buildDFA()">Build DFA</button>
+      <button class="btn-reset" onclick="loadExample()">Load Example</button>
+    </div>
+
+    <hr style="border-color:#333; margin-bottom:10px;">
+    <div class="section-title">Test String</div>
+    <label>Input String</label>
+    <input type="text" id="string-input" value="abab" placeholder="e.g. abab" />
+
+    <div class="speed-row">
+      <label>Speed</label>
+      <input type="range" id="speed" min="100" max="1500" value="700" step="100">
+      <span id="speed-val">700ms</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-success" onclick="startAnim()">▶ Run</button>
+      <button class="btn-warning" onclick="stepOnce()">⏭ Step</button>
+      <button class="btn-reset" onclick="resetAnim()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- Right: visualization -->
+  <div class="panel panel-main">
+    <div class="section-title">Automaton</div>
+    <div id="canvas-wrap">
+      <canvas id="dfa-canvas" width="580" height="300"></canvas>
+    </div>
+
+    <div id="step-info">
+      <div class="symbol-row" id="sym-row"></div>
+      <div id="msg" class="info">Build a DFA and enter a test string.</div>
+    </div>
+
+    <div class="section-title" style="margin-top:10px;">Trace Log</div>
+    <div id="trace-log"></div>
+  </div>
+</div>
+
+<script>
+// ===== DFA data model =====
+let dfa = null;
+// dfa = { states: Set<int>, alpha: char[], delta: Map<"s,sym"->int>, q0: int, finals: Set<int> }
+
+// ===== Canvas =====
+const canvas = document.getElementById('dfa-canvas');
+const ctx = canvas.getContext('2d');
+
+// Layout: place states in a circle or line
+let statePos = {}; // state -> {x, y}
+let highlightState = -1;
+let highlightEdge = null; // {from, sym, to}
+let animTimer = null;
+let animStep = 0;
+let animString = '';
+let animPath = [];  // [{state, sym}]
+let animRunning = false;
+
+// ===== Build DFA from inputs =====
+function buildDFA() {
+  const alphaRaw = document.getElementById('alpha-input').value.trim().split(/\s+/);
+  const transRaw = document.getElementById('trans-input').value.trim().split('\n');
+  const initRaw  = parseInt(document.getElementById('init-input').value.trim());
+  const finalRaw = document.getElementById('final-input').value.trim().split(/\s+/).map(Number);
+
+  const states = new Set();
+  const delta = {};
+  const finals = new Set(finalRaw);
+
+  states.add(initRaw);
+  finalRaw.forEach(f => states.add(f));
+
+  for (const line of transRaw) {
+    const parts = line.trim().split(/\s+/);
+    if (parts.length < 3) continue;
+    const from = parseInt(parts[0]);
+    const sym  = parts[1];
+    const to   = parseInt(parts[2]);
+    states.add(from); states.add(to);
+    delta[`${from},${sym}`] = to;
+  }
+
+  dfa = { states: Array.from(states).sort((a,b)=>a-b), alpha: alphaRaw, delta, q0: initRaw, finals };
+
+  layoutStates();
+  resetAnim();
+  drawDFA();
+  log('DFA built: ' + dfa.states.length + ' states, alphabet {' + alphaRaw.join(',') + '}');
+}
+
+function layoutStates() {
+  const n = dfa.states.length;
+  const cx = canvas.width / 2, cy = canvas.height / 2 - 10;
+  const r = Math.min(cx, cy) - 60;
+  statePos = {};
+  if (n === 1) {
+    statePos[dfa.states[0]] = {x: cx, y: cy};
+  } else if (n <= 5) {
+    // Arrange in a row
+    const gap = (canvas.width - 120) / (n - 1);
+    dfa.states.forEach((s, i) => {
+      statePos[s] = {x: 60 + i * gap, y: cy};
+    });
+  } else {
+    dfa.states.forEach((s, i) => {
+      const angle = (2 * Math.PI * i / n) - Math.PI / 2;
+      statePos[s] = {
+        x: cx + r * Math.cos(angle),
+        y: cy + r * Math.sin(angle)
+      };
+    });
+  }
+}
+
+// ===== Drawing =====
+const SR = 30; // state radius
+
+function drawArrow(x1, y1, x2, y2, label, color, curved, selfLoop, fromState, toState) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+
+  if (selfLoop) {
+    // Draw a loop above/below the state
+    const lx = x1, ly = y1 - SR;
+    const loopR = 22;
+    ctx.beginPath();
+    ctx.arc(lx, ly - loopR, loopR, Math.PI * 0.1, Math.PI * 0.9);
+    ctx.stroke();
+    // Arrowhead
+    const ax = lx + loopR * Math.cos(Math.PI * 0.9);
+    const ay = ly - loopR + loopR * Math.sin(Math.PI * 0.9);
+    drawHead(ax, ay, Math.PI * 1.6, color);
+    // Label
+    ctx.fillStyle = color;
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, lx, ly - loopR * 2 - 4);
+    ctx.restore(); return;
+  }
+
+  const dx = x2 - x1, dy = y2 - y1;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const ux = dx / dist, uy = dy / dist;
+  const sx = x1 + ux * SR, sy = y1 + uy * SR;
+  const ex = x2 - ux * SR, ey = y2 - uy * SR;
+
+  if (curved) {
+    const mid = {x: (sx + ex) / 2 - uy * 40, y: (sy + ey) / 2 + ux * 40};
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(mid.x, mid.y, ex, ey);
+    ctx.stroke();
+    // Label at midpoint of curve
+    ctx.fillStyle = color;
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, (sx + ex) / 2 - uy * 48, (sy + ey) / 2 + ux * 48);
+    // Arrow head direction
+    const t = 0.95;
+    const hx = (1-t)*(1-t)*sx + 2*(1-t)*t*mid.x + t*t*ex;
+    const hy = (1-t)*(1-t)*sy + 2*(1-t)*t*mid.y + t*t*ey;
+    const angle = Math.atan2(ey - hy, ex - hx);
+    drawHead(ex, ey, angle, color);
+  } else {
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    const angle = Math.atan2(dy, dx);
+    drawHead(ex, ey, angle, color);
+    // Label
+    ctx.fillStyle = color;
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'center';
+    const lx = (sx + ex) / 2 - uy * 12;
+    const ly = (sy + ey) / 2 + ux * 12;
+    ctx.fillText(label, lx, ly);
+  }
+  ctx.restore();
+}
+
+function drawHead(x, y, angle, color) {
+  const size = 10;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-size, -size / 2);
+  ctx.lineTo(-size, size / 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDFA() {
+  if (!dfa) { ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Group edges by (from, to) pair for curved multi-edge detection
+  const edgeMap = {}; // "from-to" -> [{sym, to}]
+  for (const key in dfa.delta) {
+    const [from, sym] = key.split(',');
+    const to = dfa.delta[key];
+    const k = from + '-' + to;
+    const kr = to + '-' + from;
+    if (!edgeMap[k]) edgeMap[k] = [];
+    edgeMap[k].push({from: parseInt(from), sym, to});
+  }
+
+  // Draw edges
+  const drawn = new Set();
+  for (const key in dfa.delta) {
+    const [fromS, sym] = key.split(',');
+    const from = parseInt(fromS);
+    const to = dfa.delta[key];
+    const pairKey = from + '-' + to;
+    const revKey = to + '-' + from;
+    if (drawn.has(pairKey)) continue;
+    drawn.add(pairKey);
+
+    const p1 = statePos[from], p2 = statePos[to];
+    if (!p1 || !p2) continue;
+
+    // Collect label (all symbols on this edge)
+    const syms = (edgeMap[pairKey] || []).map(e => e.sym).join(',');
+    const selfLoop = from === to;
+    const hasBoth = edgeMap[pairKey] && edgeMap[revKey];
+    const curved = hasBoth && !selfLoop;
+
+    // Check if this edge is highlighted
+    let color = '#8899aa';
+    if (highlightEdge) {
+      if (highlightEdge.from === from && edgeMap[pairKey] &&
+          edgeMap[pairKey].some(e => e.sym === highlightEdge.sym)) {
+        color = '#f4a261';
+      }
+    }
+
+    drawArrow(p1.x, p1.y, p2.x, p2.y, syms, color, curved, selfLoop, from, to);
+  }
+
+  // Draw states
+  for (const s of dfa.states) {
+    const p = statePos[s];
+    if (!p) continue;
+
+    const isHighlight = s === highlightState;
+    const isFinal = dfa.finals.has(s);
+    const isInit = s === dfa.q0;
+
+    // Glow for highlighted
+    if (isHighlight) {
+      ctx.save();
+      ctx.shadowColor = '#4cc9f0';
+      ctx.shadowBlur = 20;
+      ctx.strokeStyle = '#4cc9f0'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(p.x, p.y, SR, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+
+    // Fill
+    ctx.beginPath(); ctx.arc(p.x, p.y, SR, 0, Math.PI * 2);
+    ctx.fillStyle = isHighlight ? '#1a3a5c' : '#1a2a3c';
+    ctx.fill();
+    ctx.strokeStyle = isHighlight ? '#4cc9f0' : (isFinal ? '#80ed99' : '#556677');
+    ctx.lineWidth = isHighlight ? 3 : 2;
+    ctx.stroke();
+
+    // Final state: double circle
+    if (isFinal) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, SR - 5, 0, Math.PI * 2);
+      ctx.strokeStyle = isHighlight ? '#4cc9f0' : '#80ed99';
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
+
+    // State label
+    ctx.fillStyle = isHighlight ? '#4cc9f0' : '#ddd';
+    ctx.font = `bold 14px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('q' + s, p.x, p.y);
+
+    // Initial arrow
+    if (isInit) {
+      ctx.save();
+      ctx.strokeStyle = '#a0c4ff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(p.x - SR - 30, p.y); ctx.lineTo(p.x - SR - 2, p.y); ctx.stroke();
+      drawHead(p.x - SR - 2, p.y, 0, '#a0c4ff');
+      ctx.restore();
+    }
+  }
+}
+
+// ===== Animation =====
+function startAnim() {
+  if (!dfa) { buildDFA(); }
+  const w = document.getElementById('string-input').value.trim();
+  if (animRunning) return;
+  resetAnim();
+  animString = w;
+  buildTrace(w);
+  renderSymRow();
+  animRunning = true;
+  scheduleNext();
+}
+
+function buildTrace(w) {
+  animPath = [{state: dfa.q0, sym: null}];
+  let cur = dfa.q0;
+  for (const c of w) {
+    const key = `${cur},${c}`;
+    const nxt = dfa.delta[key];
+    if (nxt === undefined) {
+      animPath.push({state: -1, sym: c, from: cur});
+      break;
+    }
+    animPath.push({state: nxt, sym: c, from: cur});
+    cur = nxt;
+  }
+}
+
+function scheduleNext() {
+  if (!animRunning) return;
+  const speed = parseInt(document.getElementById('speed').value);
+  animTimer = setTimeout(() => doStep(), speed);
+}
+
+function doStep() {
+  if (animStep >= animPath.length) { finishAnim(); return; }
+  const entry = animPath[animStep];
+
+  highlightState = entry.state;
+  if (entry.sym) highlightEdge = {from: entry.from, sym: entry.sym, to: entry.state};
+  else highlightEdge = null;
+
+  renderSymRow();
+  drawDFA();
+
+  const msgEl = document.getElementById('msg');
+  if (animStep === 0) {
+    msgEl.innerHTML = `<span class="info">Start in state q${entry.state}</span>`;
+    log(`Initial state: q${entry.state}`);
+  } else if (entry.state === -1) {
+    msgEl.innerHTML = `<span class="reject">Dead state on symbol '${entry.sym}' — REJECTED</span>`;
+    log(`Read '${entry.sym}' from q${entry.from} → DEAD STATE → REJECTED`);
+    animRunning = false;
+    return;
+  } else {
+    msgEl.innerHTML = `<span class="info">Read '${entry.sym}': q${entry.from} → q${entry.state}</span>`;
+    log(`Read '${entry.sym}': q${entry.from} → q${entry.state}`);
+  }
+
+  animStep++;
+  if (animStep < animPath.length || (animStep === animPath.length && animPath.length > 1)) {
+    if (animStep >= animPath.length) { finishAnim(); return; }
+    scheduleNext();
+  } else {
+    scheduleNext();
+  }
+}
+
+function finishAnim() {
+  animRunning = false;
+  const last = animPath[animPath.length - 1];
+  const msgEl = document.getElementById('msg');
+  if (last.state === -1) return; // already handled
+  const accepted = dfa.finals.has(last.state);
+  if (accepted) {
+    msgEl.innerHTML = `<span class="accept">✓ ACCEPTED — ended in final state q${last.state}</span>`;
+    log('=> ACCEPTED');
+  } else {
+    msgEl.innerHTML = `<span class="reject">✗ REJECTED — ended in non-final state q${last.state}</span>`;
+    log('=> REJECTED');
+  }
+}
+
+function stepOnce() {
+  if (!dfa) buildDFA();
+  if (animStep === 0 && !animRunning) {
+    animString = document.getElementById('string-input').value.trim();
+    buildTrace(animString);
+    renderSymRow();
+    animRunning = true;
+  }
+  clearTimeout(animTimer);
+  if (animStep >= animPath.length) { finishAnim(); animRunning = false; return; }
+  doStepManual();
+}
+
+function doStepManual() {
+  if (animStep >= animPath.length) { finishAnim(); animRunning = false; return; }
+  const entry = animPath[animStep];
+  highlightState = entry.state;
+  if (entry.sym) highlightEdge = {from: entry.from, sym: entry.sym, to: entry.state};
+  else highlightEdge = null;
+  renderSymRow();
+  drawDFA();
+
+  const msgEl = document.getElementById('msg');
+  if (animStep === 0) {
+    msgEl.innerHTML = `<span class="info">Start in state q${entry.state}</span>`;
+    log(`Initial state: q${entry.state}`);
+  } else if (entry.state === -1) {
+    msgEl.innerHTML = `<span class="reject">Dead state on '${entry.sym}' — REJECTED</span>`;
+    log(`Read '${entry.sym}' from q${entry.from} → DEAD → REJECTED`);
+    animRunning = false; animStep++; return;
+  } else {
+    msgEl.innerHTML = `<span class="info">Read '${entry.sym}': q${entry.from} → q${entry.state}</span>`;
+    log(`Read '${entry.sym}': q${entry.from} → q${entry.state}`);
+  }
+
+  animStep++;
+  if (animStep >= animPath.length) { finishAnim(); animRunning = false; }
+}
+
+function resetAnim() {
+  clearTimeout(animTimer);
+  animRunning = false;
+  animStep = 0;
+  animPath = [];
+  animString = '';
+  highlightState = dfa ? dfa.q0 : -1;
+  highlightEdge = null;
+  document.getElementById('sym-row').innerHTML = '';
+  document.getElementById('msg').innerHTML = '<span class="info">Enter a string and press Run or Step.</span>';
+  drawDFA();
+}
+
+function renderSymRow() {
+  const row = document.getElementById('sym-row');
+  row.innerHTML = '';
+  for (let i = 0; i < animString.length; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'sym-cell';
+    cell.textContent = animString[i];
+    // animStep 0 = initial state (no sym consumed yet)
+    // animStep k means k-1 symbols consumed
+    if (i < animStep - 1) cell.classList.add('done');
+    else if (i === animStep - 1) cell.classList.add('current');
+    else cell.classList.add('pending');
+    row.appendChild(cell);
+  }
+  if (animString.length === 0) {
+    const cell = document.createElement('div');
+    cell.className = 'sym-cell info';
+    cell.textContent = 'λ';
+    row.appendChild(cell);
+  }
+}
+
+// ===== Trace log =====
+function log(msg) {
+  const div = document.getElementById('trace-log');
+  const entry = document.createElement('div');
+  entry.textContent = '> ' + msg;
+  div.appendChild(entry);
+  div.scrollTop = div.scrollHeight;
+}
+
+// ===== Speed label =====
+document.getElementById('speed').addEventListener('input', function() {
+  document.getElementById('speed-val').textContent = this.value + 'ms';
+});
+
+// ===== Example =====
+function loadExample() {
+  document.getElementById('alpha-input').value = 'a b';
+  document.getElementById('trans-input').value =
+    '0 a 1\n0 b 0\n1 a 1\n1 b 2\n2 a 1\n2 b 0';
+  document.getElementById('init-input').value = '0';
+  document.getElementById('final-input').value = '2';
+  document.getElementById('string-input').value = 'abab';
+  buildDFA();
+  document.getElementById('msg').innerHTML =
+    '<span class="info">Loaded: DFA accepting strings ending in "ab". Press Run.</span>';
+}
+
+// ===== Init =====
+loadExample();
+</script>
+</body>
+</html>
