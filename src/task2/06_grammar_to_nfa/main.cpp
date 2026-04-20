@@ -1,190 +1,176 @@
 // Right-Linear Grammar to NFA
 // Algorithm: G_R to nfa() -- slides 39-42, Chapter 3
 //
-// Input format (input.txt):
-//   V_count                -- number of variables
-//   V0 V1 V2 ...           -- variable names (first = start symbol)
-//   T_count                -- number of terminals
-//   a b c ...              -- terminal symbols
-//   P_count                -- number of productions
-//   Each production line:  LHS_idx t1 t2 ... [RHS_var_idx | -1]
-//     where t1..tm are terminal indices (0..T-1),
-//     last value: variable index (0..V-1) OR -1 (terminal-only production)
-//
-// Example: V0->aV1 encoded as: 0 0 1  (var0, terminal_a, var1)
-//          V0->ba  encoded as: 0 1 0 -1 (var0, terminal_b, terminal_a, -1=no var)
+// Input format (input/ directory, each .txt file):
+//   V_count
+//   VarName0 VarName1 ...     (first = start symbol)
+//   T_count
+//   t1 t2 ...                 (terminal chars)
+//   P_count
+//   LHSVarName term1 term2 ... [RHSVarName | -]
+//     where - means no RHS variable (terminal-only or lambda production)
+//     Lambda production: LHSName -  (just name and dash)
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
+#include <map>
+#include <filesystem>
+#include <algorithm>
+#include <sstream>
+namespace fs = std::filesystem;
 using namespace std;
 
-struct Edge {
-    int from, to;
-    char sym;
+// Tee: write to two streambufs simultaneously
+class TeeBuf : public streambuf {
+    streambuf *b1, *b2;
+public:
+    TeeBuf(streambuf* b1, streambuf* b2) : b1(b1), b2(b2) {}
+    int overflow(int c) override {
+        if (c == EOF) return !EOF;
+        int r1 = b1->sputc(c), r2 = b2->sputc(c);
+        return (r1 == EOF || r2 == EOF) ? EOF : c;
+    }
+    streamsize xsputn(const char* s, streamsize n) override {
+        b1->sputn(s, n); return b2->sputn(s, n);
+    }
 };
 
-int main() {
-    ifstream fin("input.txt");
-    if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
+struct Edge { int from, to; char sym; };
+
+bool processFile(const fs::path& fp) {
+    ifstream fin(fp);
+    if (!fin) { cerr<<"Cannot open "<<fp.filename().string()<<"\n"; return false; }
 
     int V;
-    if (!(fin >> V)) {
-        cerr << "Input error: input.txt is empty or missing the grammar header.\n";
-        return 1;
-    }
+    if (!(fin>>V)) { cerr<<"Input error: "<<fp.filename().string()<<" missing V_count.\n"; return false; }
     vector<string> varNames(V);
-    for (int i = 0; i < V; i++) {
-        if (!(fin >> varNames[i])) {
-            cerr << "Input error: missing variable names.\n";
-            return 1;
-        }
+    map<string,int> varIdx;
+    for (int i=0;i<V;i++) {
+        if (!(fin>>varNames[i])) { cerr<<"Input error: missing variable names.\n"; return false; }
+        varIdx[varNames[i]] = i;
     }
 
     int T;
-    if (!(fin >> T)) {
-        cerr << "Input error: missing number of terminals.\n";
-        return 1;
-    }
+    if (!(fin>>T)) { cerr<<"Input error: missing T_count.\n"; return false; }
     vector<char> term(T);
-    for (int i = 0; i < T; i++) {
-        if (!(fin >> term[i])) {
-            cerr << "Input error: missing terminal symbols.\n";
-            return 1;
-        }
+    map<char,int> termIdx;
+    for (int i=0;i<T;i++) {
+        if (!(fin>>term[i])) { cerr<<"Input error: missing terminal symbols.\n"; return false; }
+        termIdx[term[i]] = i;
     }
 
     int P;
-    if (!(fin >> P)) {
-        cerr << "Input error: missing number of productions.\n";
-        return 1;
-    }
+    if (!(fin>>P)) { cerr<<"Input error: missing P_count.\n"; return false; }
 
-    // S1: Each variable Vi -> state i; add one shared final state Vf (index V)
-    // S2: Initial state = S = state 0 (first variable)
     int Vf = V; // final state index
-    int totalStates = V + 1; // variables + final state
-    int nextTemp = V + 1;    // next available state for intermediate nodes
-
-    // We'll collect all edges and count states dynamically
+    int nextTemp = V + 1;
+    int totalStates = V + 1;
     vector<Edge> edges;
 
-    cout << "Right-Linear Grammar to NFA\n";
-    cout << "Variables: {";
-    for (int i = 0; i < V; i++) { if (i) cout << ","; cout << varNames[i]; }
-    cout << "}\n";
-    cout << "Terminals: {";
-    for (int i = 0; i < T; i++) { if (i) cout << ","; cout << term[i]; }
-    cout << "}\n";
-    cout << "Start: " << varNames[0] << " = state 0\n";
-    cout << "Final state: Vf = state " << Vf << "\n\n";
+    cout<<"Right-Linear Grammar to NFA\n";
+    cout<<"Variables: {"; for (int i=0;i<V;i++) { if (i) cout<<","; cout<<varNames[i]; } cout<<"}\n";
+    cout<<"Terminals: {"; for (int i=0;i<T;i++) { if (i) cout<<","; cout<<term[i]; } cout<<"}\n";
+    cout<<"Start: "<<varNames[0]<<" = state 0\n";
+    cout<<"Final state: Vf = state "<<Vf<<"\n";
+    cout<<"Productions and NFA transitions:\n";
 
-    cout << "Productions and NFA transitions:\n";
+    string line;
+    getline(fin, line); // consume newline after P
 
-    for (int p = 0; p < P; p++) {
-        int lhs;
-        if (!(fin >> lhs)) {
-            cerr << "Input error: missing left-hand side for production " << (p + 1) << ".\n";
-            return 1;
+    for (int p=0;p<P;p++) {
+        if (!getline(fin, line)) {
+            cerr<<"Input error: missing production "<<(p+1)<<".\n"; return false;
+        }
+        istringstream iss(line);
+        vector<string> tokens;
+        string tok;
+        while (iss >> tok) tokens.push_back(tok);
+        if (tokens.size() < 2) {
+            cerr<<"Input error: production "<<(p+1)<<" too short.\n"; return false;
         }
 
-        // Read terminals of the RHS
-        vector<int> terminals;
-        int lastToken;
-        // Read until end of line
-        // We read values one by one; last value is either -1 (no var) or var_idx
-        // We peek to see if next token is -1 or a var_idx
-        // Strategy: read all ints on the line
-        string line;
-        getline(fin, line); // read the rest of the line after lhs
-        // parse line for remaining ints
-        vector<int> tokens;
-        {
-            size_t i = 0;
-            while (i < line.size()) {
-                while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) i++;
-                if (i >= line.size()) break;
-                bool neg = false;
-                if (line[i] == '-') { neg = true; i++; }
-                int num = 0; bool hasNum = false;
-                while (i < line.size() && line[i] >= '0' && line[i] <= '9') {
-                    num = num * 10 + (line[i] - '0'); i++; hasNum = true;
-                }
-                if (hasNum) tokens.push_back(neg ? -num : num);
-            }
+        string lhsName = tokens[0];
+        string rhsToken = tokens.back();
+        int lhs = -1;
+        if (varIdx.count(lhsName)) lhs = varIdx[lhsName];
+        else { cerr<<"Input error: unknown variable "<<lhsName<<"\n"; return false; }
+
+        int rhs_var = -1;
+        if (rhsToken != "-") {
+            if (varIdx.count(rhsToken)) rhs_var = varIdx[rhsToken];
+            else { cerr<<"Input error: unknown RHS token "<<rhsToken<<"\n"; return false; }
         }
 
-        if (tokens.empty()) {
-            cerr << "Input error: production " << (p + 1)
-                 << " is missing its right-hand side.\n";
-            return 1;
+        vector<char> rhs_terms;
+        for (int k=1; k<(int)tokens.size()-1; k++) {
+            if (tokens[k].size()==1) rhs_terms.push_back(tokens[k][0]);
+            else { cerr<<"Input error: expected single char terminal, got: "<<tokens[k]<<"\n"; return false; }
         }
 
-        // Last token: -1 = terminal-only, else = variable index
-        int rhs_var = tokens.back();
-        // All tokens except last are terminal indices
-        vector<int> rhs_terms(tokens.begin(), tokens.end() - 1);
-
-        cout << "  " << varNames[lhs] << " -> ";
-        for (int t : rhs_terms) cout << term[t];
-        if (rhs_var >= 0) cout << varNames[rhs_var];
-        else if (rhs_terms.empty()) cout << "lambda";
-        cout << "  =>  transitions: ";
+        cout<<"  "<<lhsName<<" -> ";
+        for (char c : rhs_terms) cout<<c;
+        if (rhs_var>=0) cout<<varNames[rhs_var];
+        else if (rhs_terms.empty()) cout<<"lambda";
+        cout<<"  =>  transitions: ";
 
         if (rhs_terms.empty()) {
-            // Unit production Vi -> Vj: lambda edge lhs -> rhs_var
-            // Lambda production Vi -> lambda: lambda edge lhs -> Vf
-            int dest = (rhs_var >= 0) ? rhs_var : Vf;
-            Edge e; e.from = lhs; e.to = dest; e.sym = '\0';
-            edges.push_back(e);
-            cout << "q" << lhs << "--lambda-->q" << dest;
+            int dest = (rhs_var>=0) ? rhs_var : Vf;
+            edges.push_back({lhs, dest, '\0'});
+            cout<<"q"<<lhs<<"--lambda-->q"<<dest;
         } else {
-            // Build chain of states for terminal sequence
             int cur = lhs;
-            for (int k = 0; k < (int)rhs_terms.size(); k++) {
+            for (int k=0;k<(int)rhs_terms.size();k++) {
+                bool isLast = (k==(int)rhs_terms.size()-1);
                 int dest;
-                bool isLastTerm = (k == (int)rhs_terms.size() - 1);
-
-                if (isLastTerm) {
-                    dest = (rhs_var >= 0) ? rhs_var : Vf;
-                } else {
-                    dest = nextTemp++;
-                    if (nextTemp > totalStates) totalStates = nextTemp;
-                }
-
-                char sym = term[rhs_terms[k]];
+                if (isLast) dest = (rhs_var>=0) ? rhs_var : Vf;
+                else { dest = nextTemp++; if (nextTemp>totalStates) totalStates=nextTemp; }
+                char sym = rhs_terms[k];
                 edges.push_back({cur, dest, sym});
-                cout << "q" << cur << "--" << sym << "-->q" << dest;
-                if (k < (int)rhs_terms.size() - 1) cout << "  ";
+                cout<<"q"<<cur<<"--"<<sym<<"-->q"<<dest;
+                if (k<(int)rhs_terms.size()-1) cout<<"  ";
                 cur = dest;
             }
         }
-        cout << "\n";
+        cout<<"\n";
     }
 
     totalStates = max(totalStates, nextTemp);
-
-    // Print NFA
-    cout << "\n=== Resulting NFA ===\n";
-    cout << "Total states: " << totalStates << " (0.." << totalStates-1 << ")\n";
-    cout << "Initial state: q0 (" << varNames[0] << ")\n";
-    cout << "Final state: q" << Vf << " (Vf)\n\n";
-
-    cout << "All transitions:\n";
+    cout<<"\n=== Resulting NFA ===\n";
+    cout<<"Total states: "<<totalStates<<" (0.."<<totalStates-1<<")\n";
+    cout<<"Initial state: q0 ("<<varNames[0]<<")\n";
+    cout<<"Final state: q"<<Vf<<" (Vf)\n";
+    cout<<"All transitions:\n";
     for (auto& e : edges) {
-        cout << "  q" << e.from << " --";
-        if (e.sym == '\0') cout << "lambda"; else cout << e.sym;
-        cout << "--> q" << e.to << "\n";
+        cout<<"  q"<<e.from<<" --"; if (e.sym=='\0') cout<<"lambda"; else cout<<e.sym; cout<<"--> q"<<e.to<<"\n";
     }
+    cout<<"\nState labels:\n";
+    for (int i=0;i<V;i++) cout<<"  q"<<i<<" = "<<varNames[i]<<"\n";
+    cout<<"  q"<<Vf<<" = Vf (final)\n";
+    for (int i=V+1;i<totalStates;i++) cout<<"  q"<<i<<" = intermediate\n";
+    return true;
+}
 
-    // Print state labels
-    cout << "\nState labels:\n";
-    for (int i = 0; i < V; i++)
-        cout << "  q" << i << " = " << varNames[i] << "\n";
-    cout << "  q" << Vf << " = Vf (final)\n";
-    for (int i = V + 1; i < totalStates; i++)
-        cout << "  q" << i << " = intermediate\n";
+int main() {
+    fs::path inputDir="input"; if (!fs::exists(inputDir)||!fs::is_directory(inputDir)) { cerr<<"Error: input/ not found.\n"; return 1; }
+    vector<fs::path> files; for (auto& e:fs::directory_iterator(inputDir)) { if (e.is_regular_file()&&e.path().extension()==".txt") files.push_back(e.path()); }
+    if (files.empty()) { cerr<<"Error: no .txt files.\n"; return 1; }
+    sort(files.begin(),files.end());
 
+    fs::create_directories("output");
+
+    for (auto& fp:files) {
+        string outPath = "output/" + fp.filename().string();
+        ofstream fout(outPath);
+        TeeBuf tee(cout.rdbuf(), fout.rdbuf());
+        streambuf* oldBuf = cout.rdbuf(&tee);
+
+        cout<<"=== "<<fp.filename().string()<<" ===\n";
+        processFile(fp);
+        cout<<"\n";
+
+        cout.rdbuf(oldBuf);
+    }
     return 0;
 }

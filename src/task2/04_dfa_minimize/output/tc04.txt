@@ -1,0 +1,25 @@
+=== tc04.txt ===
+Input DFA: 2 states, alphabet = {a,b}, initial=q0
+Accessible: {q0,q1}
+Inaccessible: {}
+mark() procedure:
+S2: Initial marking:
+    mark(q0, q1)
+    mark(q1, dead)
+  Pass 1:
+    mark(q0, dead) via a
+  Pass 2:
+    (stable)
+
+Indistinguishable: (none)
+=== Minimized DFA ===
+States: 2
+Transition table:
+Class		States		on a		on b		
+----------------------------------------------------------------------
+C0(init)		{q0}		C1		C0		
+C1(final)		{q1}		C1		C0		
+
+Initial state: C0
+Final states: C1 
+

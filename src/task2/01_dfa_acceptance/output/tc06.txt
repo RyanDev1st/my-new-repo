@@ -1,0 +1,25 @@
+=== tc06.txt ===
+DFA: 4 states, alphabet = {a,b}
+Initial: q0  Final: {q2}
+
+Input: ab
+  Steps: q0 --a--> q1 --b--> q2
+  Result: ACCEPTED
+
+Input: a
+  Steps: q0 --a--> q1
+  Result: REJECTED (non-final state q1)
+
+Input: b
+  Steps: q0 --b--> q3
+  Result: REJECTED (non-final state q3)
+
+Input: aba
+  Steps: q0 --a--> q1 --b--> q2 --a--> q3
+  Result: REJECTED (non-final state q3)
+
+Input: ""
+  Steps: q0
+  Result: REJECTED (non-final state q0)
+
+

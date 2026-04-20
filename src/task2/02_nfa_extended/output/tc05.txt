@@ -1,0 +1,31 @@
+=== tc05.txt ===
+NFA: 3 states, alphabet = {a}
+Initial: q0  Final: {q2}
+
+delta*(0, ""):
+    lambda-closure({0}) = {0,1,2}
+  => {0,1,2}  [ACCEPTED]
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0,1,2}
+    move({0,1,2}, a) = {0}
+    lambda-closure = {0,1,2}
+  => {0,1,2}  [ACCEPTED]
+
+delta*(0, "aa"):
+    lambda-closure({0}) = {0,1,2}
+    move({0,1,2}, a) = {0}
+    lambda-closure = {0,1,2}
+    move({0,1,2}, a) = {0}
+    lambda-closure = {0,1,2}
+  => {0,1,2}  [ACCEPTED]
+
+delta*(1, ""):
+    lambda-closure({1}) = {1,2}
+  => {1,2}  [ACCEPTED]
+
+delta*(2, ""):
+    lambda-closure({2}) = {2}
+  => {2}  [ACCEPTED]
+
+

@@ -1,0 +1,17 @@
+4 2
+a b
+5
+q0 a q0
+q0 a q1
+q0 b q1
+q1 b q2
+q2 a q3
+q0
+2
+q0 q3
+5
+q0 a
+q0 ba
+q0
+q0 bba
+q1 ba

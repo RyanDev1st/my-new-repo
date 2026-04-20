@@ -1,0 +1,39 @@
+=== tc06.txt ===
+NFA: 2 states, alphabet = {a,b}
+Initial: q0  Final: {q1}
+
+delta*(0, "b"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {1}
+    lambda-closure = {1}
+  => {1}  [ACCEPTED]
+
+delta*(0, "ab"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0}
+    lambda-closure = {0}
+    move({0}, b) = {1}
+    lambda-closure = {1}
+  => {1}  [ACCEPTED]
+
+delta*(0, "aab"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0}
+    lambda-closure = {0}
+    move({0}, a) = {0}
+    lambda-closure = {0}
+    move({0}, b) = {1}
+    lambda-closure = {1}
+  => {1}  [ACCEPTED]
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0}
+    lambda-closure = {0}
+  => {0}  [REJECTED]
+
+delta*(0, ""):
+    lambda-closure({0}) = {0}
+  => {0}  [REJECTED]
+
+

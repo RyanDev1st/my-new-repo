@@ -1,0 +1,25 @@
+=== tc05.txt ===
+DFA: 3 states, alphabet = {0,1}
+Initial: q0  Final: {q0}
+
+Input: 0
+  Steps: q0 --0--> q0
+  Result: ACCEPTED
+
+Input: 11
+  Steps: q0 --1--> q1 --1--> q0
+  Result: ACCEPTED
+
+Input: 110
+  Steps: q0 --1--> q1 --1--> q0 --0--> q0
+  Result: ACCEPTED
+
+Input: 1001
+  Steps: q0 --1--> q1 --0--> q2 --0--> q1 --1--> q0
+  Result: ACCEPTED
+
+Input: 100
+  Steps: q0 --1--> q1 --0--> q2 --0--> q1
+  Result: REJECTED (non-final state q1)
+
+

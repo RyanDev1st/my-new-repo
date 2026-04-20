@@ -1,0 +1,10 @@
+3 2
+a b
+4
+q0 a q1
+q0 b q2
+q1 a q1
+q2 b q2
+q0
+2
+q1 q2

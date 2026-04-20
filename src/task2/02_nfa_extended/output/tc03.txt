@@ -1,0 +1,35 @@
+=== tc03.txt ===
+NFA: 3 states, alphabet = {a,b}
+Initial: q0  Final: {q2}
+
+delta*(0, "ab"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {1}
+    lambda-closure = {1}
+    move({1}, b) = {2}
+    lambda-closure = {2}
+  => {2}  [ACCEPTED]
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {1}
+    lambda-closure = {1}
+  => {1}  [REJECTED]
+
+delta*(1, "b"):
+    lambda-closure({1}) = {1}
+    move({1}, b) = {2}
+    lambda-closure = {2}
+  => {2}  [ACCEPTED]
+
+delta*(0, "b"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {}
+    lambda-closure = {}
+  => {}  [REJECTED]
+
+delta*(2, ""):
+    lambda-closure({2}) = {2}
+  => {2}  [ACCEPTED]
+
+

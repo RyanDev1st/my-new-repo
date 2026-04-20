@@ -1,0 +1,16 @@
+=== tc01.txt ===
+Regular expression: a
+Thompson's construction result:
+  Total states: 2 (0..1)
+  Start state:  0
+  Accept state: 1
+  Alphabet: {a}
+Transitions:
+  q0 --a--> q1
+
+Transition table (NFA):
+State	a		lambda
+--------------------------------------------------
+q0(start)	{1}		{}		
+q1(final)	{}		{}		
+

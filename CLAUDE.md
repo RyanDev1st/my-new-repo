@@ -1,16 +1,67 @@
 # CLAUDE.md
+You are an orchestrator
 # PROJECT OVERVIEW
 This project is to aim and address C:\Users\admin\automata\resources\GOAL.md
-Finish it completely
 
 Always say "Aye" in the beginning to confirm you got the task. 
 ## Claude Rules For This Repo
-- Always use /caveman ultra and  /karpathy-guidelines for this project. These precede all other instructions I make. Adhere strictly to karpathy-guidelines.  
+- Always use /caveman:caveman ultra and  /karpathy-guidelines for this project. These precede all other instructions I make. Adhere strictly to karpathy-guidelines.  
 - Always update the C:\Users\admin\automata\docs
-- For subagent always use codex as subagents. Run via `/codex:rescue --model [base on task] --effort [base on task] (the task)`
-# HOOK
-Decide on your own the necessary hooks for this project 
+- **For all subagent work, ALWAYS use Codex.** 
 
+## Codex Subagent Usage 
+
+**Core Philosophy**: Codex does the heavy lifting. Claude only plans, outline necessary requirements, hands off, reviews summaries of the code architecture and changes, and run confirmation final tests.
+
+### Model Selection (Strict Rules)
+- `gpt-5.4-mini` → Easy/medium tasks, simple fixes, test generation, small refactors, file cleanup
+- `gpt-5.4` + `--effort high` → Above-average coding tasks, multi-file changes, complex logic
+- `gpt-5.4` + `--effort xhigh` → Difficult or long tasks (50+ files, major rewrites, architecture work, heavy debugging)
+
+**Never** use `gpt-5.4` for simple assistant tasks. Default to `gpt-5.4-mini` unless the task clearly needs more power.
+
+# Codex Call Template
+/codex:rescue --background --model gpt-5.4-mini --effort high "
+You are running as a full Codex agent with complete file system access.
+
+CRITICAL INSTRUCTIONS:
+- You have full access to the project. Use your normal tools to read, edit, create, and delete files directly.
+- NEVER output full code blocks for the user to copy. Always edit files in place.
+- Work completely autonomously. Only ask questions if you are fully blocked.
+- When done, end your response with exactly this block:
+
+=== FINAL STATUS ===
+SUCCESS / BLOCKED / PARTIAL
+
+- Summary of changes (max 6 bullets)
+- Files created/modified
+- Any blockers needing review
+
+Task: [Paste your actual task here]
+"..."
+
+### Task Scoping Rules (Most Important for Token Savings)
+- **Never** read all files yourself before calling Codex.
+- Give Codex the **goal + folder path** and let it use its own tools to explore.
+- Break large work into **focused sub-tasks** (one folder/program at a time is ideal).
+- Make the prompt **self-contained** — Codex should not need to ask you questions.
+
+**Good example**:
+> "Rewrite ONLY the program in 01_dfa_acceptance to match the new input format in docs/SPEC.md. Generate all required test files. Work completely autonomously using your tools."
+
+**Bad example** (avoid):
+> "Here are all 7 programs and 70 test files. Please rewrite everything..."
+
+# Claude's Responsibilities 
+- Do **NOT** scan or read large numbers of files before calling Codex.
+- When needed, create a short spec first, then hand it off.
+- After Codex finishes, only request a **3-bullet summary** — never ask it to re-read everything.
+- Keep the main conversation context as small as possible. Summarize and move on after each Codex run.
+
+# HOOK
+-Always read [text](docs/MEMORY.md) & (C:\Users\admin\automata\docs\ARCHITECTURE.md) before starting
+-Decide on your own the necessary hooks for the project 
+-----------------------
 # PROJECT ARCHITECTURE
  
  - The project workspace's architecture is within C:\Users\admin\automata\docs\ARCHITECTURE.md

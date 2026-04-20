@@ -1,0 +1,47 @@
+=== tc01.txt ===
+NFA: 3 states, alphabet = {0,1}
+Initial: q0  Final: {q2}
+
+delta*(0, "01"):
+    lambda-closure({0}) = {0}
+    move({0}, 0) = {0,1}
+    lambda-closure = {0,1}
+    move({0,1}, 1) = {0,2}
+    lambda-closure = {0,2}
+  => {0,2}  [ACCEPTED]
+
+delta*(0, "001"):
+    lambda-closure({0}) = {0}
+    move({0}, 0) = {0,1}
+    lambda-closure = {0,1}
+    move({0,1}, 0) = {0,1}
+    lambda-closure = {0,1}
+    move({0,1}, 1) = {0,2}
+    lambda-closure = {0,2}
+  => {0,2}  [ACCEPTED]
+
+delta*(0, "1"):
+    lambda-closure({0}) = {0}
+    move({0}, 1) = {0}
+    lambda-closure = {0}
+  => {0}  [REJECTED]
+
+delta*(0, "11"):
+    lambda-closure({0}) = {0}
+    move({0}, 1) = {0}
+    lambda-closure = {0}
+    move({0}, 1) = {0}
+    lambda-closure = {0}
+  => {0}  [REJECTED]
+
+delta*(0, "101"):
+    lambda-closure({0}) = {0}
+    move({0}, 1) = {0}
+    lambda-closure = {0}
+    move({0}, 0) = {0,1}
+    lambda-closure = {0,1}
+    move({0,1}, 1) = {0,2}
+    lambda-closure = {0,2}
+  => {0,2}  [ACCEPTED]
+
+

@@ -1,14 +1,14 @@
 // NFA to DFA Conversion (Subset Construction)
 // Algorithm: nfa-to-dfa procedure -- slides 45-46, 53, Chapter 2
 //
-// Input format (input.txt): same as 02_nfa_extended
+// Input format (input/ directory, each .txt file):
 //   N M
 //   s0 ... sM-1
 //   E
-//   from sym_idx to     (sym_idx = M = lambda)
-//   q0
+//   qX sym qY     (sym=~ means lambda)
+//   qinit
 //   F_count
-//   f0 f1 ...
+//   qf1 qf2 ...
 
 #include <iostream>
 #include <fstream>
@@ -17,7 +17,25 @@
 #include <map>
 #include <queue>
 #include <string>
+#include <filesystem>
+#include <algorithm>
+namespace fs = std::filesystem;
 using namespace std;
+
+// Tee: write to two streambufs simultaneously
+class TeeBuf : public streambuf {
+    streambuf *b1, *b2;
+public:
+    TeeBuf(streambuf* b1, streambuf* b2) : b1(b1), b2(b2) {}
+    int overflow(int c) override {
+        if (c == EOF) return !EOF;
+        int r1 = b1->sputc(c), r2 = b2->sputc(c);
+        return (r1 == EOF || r2 == EOF) ? EOF : c;
+    }
+    streamsize xsputn(const char* s, streamsize n) override {
+        b1->sputn(s, n); return b2->sputn(s, n);
+    }
+};
 
 struct NFA {
     int N, M;
@@ -26,6 +44,17 @@ struct NFA {
     int q0;
     set<int> F;
 };
+
+int parseState(const string& t) {
+    if (!t.empty() && (t[0]=='q'||t[0]=='Q')) return stoi(t.substr(1));
+    return stoi(t);
+}
+
+int parseSym(const string& t, const vector<char>& alpha, int M) {
+    if (t=="~"||t=="lambda") return M;
+    if (t.size()==1) for (int i=0;i<M;i++) if(alpha[i]==t[0]) return i;
+    return -1;
+}
 
 set<int> lambdaClosure(int q, const NFA& nfa) {
     set<int> closure = {q};
@@ -46,54 +75,39 @@ set<int> lambdaClosureSet(const set<int>& T, const NFA& nfa) {
 
 set<int> moveSet(const set<int>& T, int sym, const NFA& nfa) {
     set<int> result;
-    for (int q : T)
-        for (int nxt : nfa.delta[q][sym]) result.insert(nxt);
+    for (int q : T) for (int nxt : nfa.delta[q][sym]) result.insert(nxt);
     return result;
 }
 
-NFA readNFA(ifstream& fin) {
+NFA readNFA(ifstream& fin, const string& fname) {
     NFA nfa;
     if (!(fin >> nfa.N >> nfa.M)) {
-        cerr << "Input error: input.txt is empty or missing the NFA header.\n";
-        return {};
+        cerr << "Input error: " << fname << " is empty or missing the NFA header.\n"; return {};
     }
     nfa.alpha.resize(nfa.M);
     for (int i = 0; i < nfa.M; i++) {
-        if (!(fin >> nfa.alpha[i])) {
-            cerr << "Input error: missing alphabet symbols.\n";
-            return {};
-        }
+        if (!(fin >> nfa.alpha[i])) { cerr << "Input error: missing alphabet symbols.\n"; return {}; }
     }
     nfa.delta.assign(nfa.N, vector<set<int>>(nfa.M + 1));
     int E;
-    if (!(fin >> E)) {
-        cerr << "Input error: missing number of NFA transitions.\n";
-        return {};
-    }
+    if (!(fin >> E)) { cerr << "Input error: missing number of NFA transitions.\n"; return {}; }
     for (int i = 0; i < E; i++) {
-        int from, sym, to;
-        if (!(fin >> from >> sym >> to)) {
-            cerr << "Input error: incomplete NFA transition list.\n";
-            return {};
-        }
+        string sf, ss, st;
+        if (!(fin >> sf >> ss >> st)) { cerr << "Input error: incomplete NFA transition list.\n"; return {}; }
+        int from = parseState(sf);
+        int sym = parseSym(ss, nfa.alpha, nfa.M);
+        int to = parseState(st);
         nfa.delta[from][sym].insert(to);
     }
-    if (!(fin >> nfa.q0)) {
-        cerr << "Input error: missing initial state.\n";
-        return {};
-    }
+    string sq0;
+    if (!(fin >> sq0)) { cerr << "Input error: missing initial state.\n"; return {}; }
+    nfa.q0 = parseState(sq0);
     int Fc;
-    if (!(fin >> Fc)) {
-        cerr << "Input error: missing number of final states.\n";
-        return {};
-    }
+    if (!(fin >> Fc)) { cerr << "Input error: missing number of final states.\n"; return {}; }
     for (int i = 0; i < Fc; i++) {
-        int f;
-        if (!(fin >> f)) {
-            cerr << "Input error: incomplete final-state list.\n";
-            return {};
-        }
-        nfa.F.insert(f);
+        string sf;
+        if (!(fin >> sf)) { cerr << "Input error: incomplete final-state list.\n"; return {}; }
+        nfa.F.insert(parseState(sf));
     }
     return nfa;
 }
@@ -105,111 +119,123 @@ void printSet(const set<int>& s) {
     cout << "}";
 }
 
-int main() {
-    ifstream fin("input.txt");
-    if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
-
-    NFA nfa = readNFA(fin);
-    if (!fin) return 1;
+bool processFile(const fs::path& fp) {
+    ifstream fin(fp);
+    if (!fin) { cerr << "Cannot open " << fp.filename().string() << "\n"; return false; }
+    NFA nfa = readNFA(fin, fp.filename().string());
+    if (nfa.N == 0) return false;
 
     cout << "NFA: " << nfa.N << " states, alphabet = {";
     for (int i = 0; i < nfa.M; i++) { if (i) cout << ","; cout << nfa.alpha[i]; }
-    cout << "}, initial=q" << nfa.q0 << ", finals={";
-    bool f = true; for (int s : nfa.F) { if (!f) cout << ","; cout << "q"<<s; f=false; }
-    cout << "}\n\n";
+    cout << "}\n";
+    cout << "Initial: q" << nfa.q0 << "  Final NFA states: {";
+    bool f = true;
+    for (int s : nfa.F) { if (!f) cout << ","; cout << "q" << s; f = false; }
+    cout << "}\n";
 
     // Subset construction
-    // DFA state = set of NFA states (after lambda-closure)
-    // S1: Initial DFA state = lambda-closure(q0)
-    set<int> initSet = lambdaClosure(nfa.q0, nfa);
-
-    map<set<int>, int> stateId;
-    vector<set<int>> stateList;
+    map<set<int>, int> dfaStateId;
+    vector<set<int>> dfaStates;
     queue<set<int>> worklist;
 
-    auto getOrAdd = [&](const set<int>& s) -> int {
-        auto it = stateId.find(s);
-        if (it != stateId.end()) return it->second;
-        int id = (int)stateList.size();
-        stateId[s] = id;
-        stateList.push_back(s);
-        worklist.push(s);
-        return id;
-    };
+    set<int> startSet = lambdaClosure(nfa.q0, nfa);
+    dfaStateId[startSet] = 0;
+    dfaStates.push_back(startSet);
+    worklist.push(startSet);
 
-    getOrAdd(initSet);
+    vector<vector<int>> dfaTrans;
+    set<int> dfaFinal;
 
-    // dfaDelta[dfa_state][sym] = next dfa_state (-1 = dead)
-    map<int, vector<int>> dfaDelta;
+    cout << "Subset construction:\n";
+    cout << "  Start: ";
+    printSet(startSet);
+    cout << " = D0\n";
 
-    // S2-S6: For each DFA state, compute transitions
-    cout << "Subset construction steps:\n";
     while (!worklist.empty()) {
         set<int> cur = worklist.front(); worklist.pop();
-        int curId = stateId[cur];
+        int curId = dfaStateId[cur];
+        dfaTrans.resize(dfaStates.size(), vector<int>(nfa.M, -1));
 
-        cout << "  D" << curId << " = "; printSet(cur); cout << ":\n";
-        dfaDelta[curId].assign(nfa.M, -1);
+        bool isFinal = false;
+        for (int s : cur) if (nfa.F.count(s)) { isFinal = true; break; }
+        if (isFinal) dfaFinal.insert(curId);
 
         for (int a = 0; a < nfa.M; a++) {
-            // S3: compute delta*({cur states}, a)
             set<int> moved = moveSet(cur, a, nfa);
             set<int> next = lambdaClosureSet(moved, nfa);
+            if (next.empty()) continue;
 
-            cout << "    on '" << nfa.alpha[a] << "': move="; printSet(moved);
-            cout << " -> lc="; printSet(next);
-
-            if (!next.empty()) {
-                int nextId = getOrAdd(next);
-                dfaDelta[curId][a] = nextId;
-                cout << " = D" << nextId;
-            } else {
-                cout << " = dead";
+            if (!dfaStateId.count(next)) {
+                int newId = (int)dfaStates.size();
+                dfaStateId[next] = newId;
+                dfaStates.push_back(next);
+                worklist.push(next);
+                dfaTrans.resize(dfaStates.size(), vector<int>(nfa.M, -1));
+                cout << "  New DFA state D" << newId << " = ";
+                printSet(next);
+                cout << "\n";
             }
-            cout << "\n";
+            dfaTrans[curId][a] = dfaStateId[next];
         }
     }
 
-    int numDFA = (int)stateList.size();
-    cout << "\n=== Resulting DFA ===\n";
-    cout << "States: " << numDFA << " (D0 .. D" << numDFA-1 << ")\n";
-    cout << "Alphabet: {";
-    for (int i = 0; i < nfa.M; i++) { if (i) cout << ","; cout << nfa.alpha[i]; }
-    cout << "}\n\n";
+    int Nd = (int)dfaStates.size();
+    cout << "\nResulting DFA: " << Nd << " states\n";
 
-    // Transition table header
+    cout << "DFA Transition Table:\n";
     cout << "State\t\t";
     for (int a = 0; a < nfa.M; a++) cout << nfa.alpha[a] << "\t\t";
-    cout << "NFA-states\n";
-    cout << string(60, '-') << "\n";
+    cout << "\n" << string(50, '-') << "\n";
 
-    for (int i = 0; i < numDFA; i++) {
-        cout << "D" << i;
-        if (stateId[initSet] == i) cout << "(init)";
-
-        // Check if final (contains any NFA final state)
-        bool isFinal = false;
-        for (int s : stateList[i]) if (nfa.F.count(s)) { isFinal = true; break; }
-        if (isFinal) cout << "(final)";
-        cout << "\t";
-
+    for (int d = 0; d < Nd; d++) {
+        cout << "D" << d;
+        if (d == 0) cout << "(init)";
+        if (dfaFinal.count(d)) cout << "(final)";
+        cout << "=";
+        printSet(dfaStates[d]);
+        cout << "\t\t";
         for (int a = 0; a < nfa.M; a++) {
-            int nxt = dfaDelta[i][a];
+            int nxt = (d < (int)dfaTrans.size() && a < (int)dfaTrans[d].size()) ? dfaTrans[d][a] : -1;
             if (nxt == -1) cout << "dead\t\t";
             else cout << "D" << nxt << "\t\t";
         }
-        printSet(stateList[i]);
         cout << "\n";
     }
 
-    cout << "\nInitial state: D" << stateId[initSet] << "\n";
-    cout << "Final states: ";
-    for (int i = 0; i < numDFA; i++) {
-        bool isFinal = false;
-        for (int s : stateList[i]) if (nfa.F.count(s)) { isFinal = true; break; }
-        if (isFinal) cout << "D" << i << " ";
-    }
-    cout << "\n";
+    cout << "\nInitial DFA state: D0\n";
+    cout << "Final DFA states: {";
+    f = true;
+    for (int d : dfaFinal) { if (!f) cout << ","; cout << "D" << d; f = false; }
+    cout << "}\n";
+    return true;
+}
 
+int main() {
+    fs::path inputDir = "input";
+    if (!fs::exists(inputDir) || !fs::is_directory(inputDir)) {
+        cerr << "Error: input/ directory not found.\n"; return 1;
+    }
+    vector<fs::path> files;
+    for (auto& entry : fs::directory_iterator(inputDir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".txt")
+            files.push_back(entry.path());
+    }
+    if (files.empty()) { cerr << "Error: no .txt files found in input/.\n"; return 1; }
+    sort(files.begin(), files.end());
+
+    fs::create_directories("output");
+
+    for (auto& fp : files) {
+        string outPath = "output/" + fp.filename().string();
+        ofstream fout(outPath);
+        TeeBuf tee(cout.rdbuf(), fout.rdbuf());
+        streambuf* oldBuf = cout.rdbuf(&tee);
+
+        cout << "=== " << fp.filename().string() << " ===\n";
+        processFile(fp);
+        cout << "\n";
+
+        cout.rdbuf(oldBuf);
+    }
     return 0;
 }

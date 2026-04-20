@@ -1,0 +1,39 @@
+=== tc10.txt ===
+NFA: 2 states, alphabet = {a,b}
+Initial: q0  Final: {q0}
+
+delta*(0, ""):
+    lambda-closure({0}) = {0}
+  => {0}  [ACCEPTED]
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "aa"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {1}
+    lambda-closure = {0,1}
+    move({0,1}, a) = {1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "aaa"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {1}
+    lambda-closure = {0,1}
+    move({0,1}, a) = {1}
+    lambda-closure = {0,1}
+    move({0,1}, a) = {1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "b"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {}
+    lambda-closure = {}
+  => {}  [REJECTED]
+
+

@@ -1,9 +1,11 @@
 {
-  "spinnerTipsEnabled": false,
-  "prefersReducedMotion": false,
   "permissions": {
     "allow": [
-      "PowerShell(& \"C:\\\\msys64\\\\ucrt64\\\\bin\\\\g++.exe\" --version)"
+      "PowerShell(& \"C:\\\\msys64\\\\ucrt64\\\\bin\\\\g++.exe\" --version)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Test-Path *)"
     ]
-  }
+  },
+  "spinnerTipsEnabled": false,
+  "prefersReducedMotion": false
 }

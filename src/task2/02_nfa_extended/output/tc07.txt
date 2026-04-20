@@ -1,0 +1,43 @@
+=== tc07.txt ===
+NFA: 2 states, alphabet = {a,b}
+Initial: q0  Final: {q1}
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "ba"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {0}
+    lambda-closure = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "b"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {0}
+    lambda-closure = {0}
+  => {0}  [REJECTED]
+
+delta*(0, "aa"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+    move({0,1}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "aba"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+    move({0,1}, b) = {0}
+    lambda-closure = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+

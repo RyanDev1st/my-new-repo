@@ -1,0 +1,9 @@
+2
+S B
+2
+a b
+4
+S a S
+S a B
+B b B
+B b -

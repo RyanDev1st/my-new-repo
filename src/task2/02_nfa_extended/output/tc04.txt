@@ -1,0 +1,41 @@
+=== tc04.txt ===
+NFA: 4 states, alphabet = {a,b}
+Initial: q0  Final: {q0,q3}
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "ba"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {1}
+    lambda-closure = {1}
+    move({1}, a) = {}
+    lambda-closure = {}
+  => {}  [REJECTED]
+
+delta*(0, ""):
+    lambda-closure({0}) = {0}
+  => {0}  [ACCEPTED]
+
+delta*(0, "bba"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {1}
+    lambda-closure = {1}
+    move({1}, b) = {2}
+    lambda-closure = {2}
+    move({2}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+delta*(1, "ba"):
+    lambda-closure({1}) = {1}
+    move({1}, b) = {2}
+    lambda-closure = {2}
+    move({2}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+

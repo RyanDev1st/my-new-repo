@@ -1,0 +1,26 @@
+=== tc07.txt ===
+Regular expression: (ab)*
+Thompson's construction result:
+  Total states: 6 (0..5)
+  Start state:  4
+  Accept state: 5
+  Alphabet: {a,b}
+Transitions:
+  q0 --a--> q1
+  q2 --b--> q3
+  q1 --lambda--> q2
+  q4 --lambda--> q0
+  q3 --lambda--> q5
+  q4 --lambda--> q5
+  q3 --lambda--> q0
+
+Transition table (NFA):
+State	a		b		lambda
+--------------------------------------------------
+q0	{1}		{}		{}		
+q1	{}		{}		{2}		
+q2	{}		{3}		{}		
+q3	{}		{}		{0,5}		
+q4(start)	{}		{}		{0,5}		
+q5(final)	{}		{}		{}		
+

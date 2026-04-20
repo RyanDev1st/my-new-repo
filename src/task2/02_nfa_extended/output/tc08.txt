@@ -1,0 +1,35 @@
+=== tc08.txt ===
+NFA: 4 states, alphabet = {a,b}
+Initial: q0  Final: {q3}
+
+delta*(0, "a"):
+    lambda-closure({0}) = {0,1,2}
+    move({0,1,2}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+delta*(0, "b"):
+    lambda-closure({0}) = {0,1,2}
+    move({0,1,2}, b) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+delta*(0, ""):
+    lambda-closure({0}) = {0,1,2}
+  => {0,1,2}  [REJECTED]
+
+delta*(0, "ab"):
+    lambda-closure({0}) = {0,1,2}
+    move({0,1,2}, a) = {3}
+    lambda-closure = {3}
+    move({3}, b) = {}
+    lambda-closure = {}
+  => {}  [REJECTED]
+
+delta*(1, "a"):
+    lambda-closure({1}) = {1}
+    move({1}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+

@@ -1,0 +1,25 @@
+=== tc09.txt ===
+DFA: 3 states, alphabet = {a,b}
+Initial: q0  Final: {q2}
+
+Input: bb
+  Steps: q0 --b--> q1 --b--> q2
+  Result: ACCEPTED
+
+Input: abb
+  Steps: q0 --a--> q0 --b--> q1 --b--> q2
+  Result: ACCEPTED
+
+Input: b
+  Steps: q0 --b--> q1
+  Result: REJECTED (non-final state q1)
+
+Input: bab
+  Steps: q0 --b--> q1 --a--> q0 --b--> q1
+  Result: REJECTED (non-final state q1)
+
+Input: abbb
+  Steps: q0 --a--> q0 --b--> q1 --b--> q2 --b--> q2
+  Result: ACCEPTED
+
+

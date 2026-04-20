@@ -20,7 +20,24 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include <filesystem>
+namespace fs = std::filesystem;
 using namespace std;
+
+// Tee: write to two streambufs simultaneously
+class TeeBuf : public streambuf {
+    streambuf *b1, *b2;
+public:
+    TeeBuf(streambuf* b1, streambuf* b2) : b1(b1), b2(b2) {}
+    int overflow(int c) override {
+        if (c == EOF) return !EOF;
+        int r1 = b1->sputc(c), r2 = b2->sputc(c);
+        return (r1 == EOF || r2 == EOF) ? EOF : c;
+    }
+    streamsize xsputn(const char* s, streamsize n) override {
+        b1->sputn(s, n); return b2->sputn(s, n);
+    }
+};
 
 struct Edge {
     int from, to;
@@ -40,12 +57,6 @@ void addEdge(int from, int to, char sym) {
 }
 
 struct Frag { int start, accept; };
-
-// S1a: NFA for empty set (no transitions, no accept)
-Frag makeEmpty() {
-    int s = newState(), a = newState();
-    return {s, a};
-}
 
 // S1b: NFA for lambda (accepts empty string)
 Frag makeLambda() {
@@ -78,9 +89,9 @@ Frag makeConcat(Frag m1, Frag m2) {
 }
 
 // S2c: Kleene star r*
-// new_start -λ-> m.start; m.accept -λ-> new_final
-// new_start -λ-> new_final (accept lambda)
-// m.accept -λ-> m.start   (loop for repetition)
+// new_start -lambda-> m.start; m.accept -lambda-> new_final
+// new_start -lambda-> new_final (accept lambda)
+// m.accept -lambda-> m.start   (loop for repetition)
 Frag makeStar(Frag m) {
     int s = newState(), a = newState();
     addLambda(s, m.start);
@@ -141,78 +152,80 @@ Frag parseAtom() {
 }
 
 int main() {
-    ifstream fin("input.txt");
-    if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
-
-    if (!getline(fin, re)) {
-        cerr << "Input error: input.txt is empty. Provide a regular expression.\n";
-        return 1;
+    fs::path inputDir = "input";
+    if (!fs::exists(inputDir)||!fs::is_directory(inputDir)) {
+        cerr<<"Error: input/ directory not found.\n"; return 1;
     }
-    // strip trailing whitespace/cr
-    while (!re.empty() && (re.back() == '\r' || re.back() == '\n' || re.back() == ' '))
-        re.pop_back();
-
-    if (re.empty()) {
-        cerr << "Input error: regular expression is empty. Use '~' to represent lambda.\n";
-        return 1;
+    vector<fs::path> files;
+    for (auto& entry : fs::directory_iterator(inputDir)) {
+        if (entry.is_regular_file() && entry.path().extension()==".txt")
+            files.push_back(entry.path());
     }
+    if (files.empty()) { cerr<<"Error: no .txt files in input/.\n"; return 1; }
+    sort(files.begin(), files.end());
 
-    cout << "Regular expression: " << re << "\n\n";
+    fs::create_directories("output");
 
-    pos = 0;
-    Frag result = parseExpr();
+    for (auto& fp : files) {
+        string outPath = "output/" + fp.filename().string();
+        ofstream fout(outPath);
+        TeeBuf tee(cout.rdbuf(), fout.rdbuf());
+        streambuf* oldBuf = cout.rdbuf(&tee);
 
-    cout << "Thompson's construction result:\n";
-    cout << "  Total states: " << stateCount << " (0.." << stateCount-1 << ")\n";
-    cout << "  Start state:  " << result.start << "\n";
-    cout << "  Accept state: " << result.accept << "\n";
+        // Reset global state
+        stateCount = 0;
+        edges.clear();
+        alphabetSet.clear();
 
-    vector<char> alpha(alphabetSet.begin(), alphabetSet.end());
-    sort(alpha.begin(), alpha.end());
-    cout << "  Alphabet: {";
-    for (int i = 0; i < (int)alpha.size(); i++) { if (i) cout << ","; cout << alpha[i]; }
-    cout << "}\n\n";
+        ifstream fin(fp);
+        if (!fin) { cerr<<"Cannot open "<<fp.filename().string()<<"\n"; cout.rdbuf(oldBuf); continue; }
+        if (!getline(fin, re)) {
+            cerr<<"Input error: "<<fp.filename().string()<<" is empty.\n"; cout.rdbuf(oldBuf); continue;
+        }
+        while (!re.empty() && (re.back()=='\r' || re.back()=='\n' || re.back()==' ')) re.pop_back();
+        if (re.empty()) { cerr<<"Input error: empty regex. Use ~ for lambda.\n"; cout.rdbuf(oldBuf); continue; }
 
-    cout << "Transitions:\n";
-    for (auto& e : edges) {
-        cout << "  q" << e.from << " --";
-        if (e.sym == '\0') cout << "lambda";
-        else cout << e.sym;
-        cout << "--> q" << e.to << "\n";
-    }
+        cout << "=== " << fp.filename().string() << " ===\n";
+        cout << "Regular expression: " << re << "\n";
+        pos = 0;
+        Frag result = parseExpr();
 
-    // Print as transition table for clarity
-    cout << "\nTransition table (NFA):\n";
-    // Map alphabet chars to indices
-    map<char, int> symIdx;
-    for (int i = 0; i < (int)alpha.size(); i++) symIdx[alpha[i]] = i;
-    int M = (int)alpha.size();
+        cout << "Thompson's construction result:\n";
+        cout << "  Total states: " << stateCount << " (0.." << stateCount-1 << ")\n";
+        cout << "  Start state:  " << result.start << "\n";
+        cout << "  Accept state: " << result.accept << "\n";
 
-    // Build adjacency per state
-    vector<vector<set<int>>> delta(stateCount, vector<set<int>>(M + 1)); // M = lambda
-    for (auto& e : edges) {
-        if (e.sym == '\0') delta[e.from][M].insert(e.to);
-        else delta[e.from][symIdx[e.sym]].insert(e.to);
-    }
+        vector<char> alpha(alphabetSet.begin(), alphabetSet.end());
+        sort(alpha.begin(), alpha.end());
+        cout << "  Alphabet: {";
+        for (int i=0;i<(int)alpha.size();i++) { if (i) cout<<","; cout<<alpha[i]; }
+        cout << "}\n";
 
-    cout << "State\t";
-    for (char c : alpha) cout << c << "\t\t";
-    cout << "lambda\n";
-    cout << string(50, '-') << "\n";
+        cout << "Transitions:\n";
+        for (auto& e : edges) {
+            cout << "  q" << e.from << " --";
+            if (e.sym=='\0') cout<<"lambda"; else cout<<e.sym;
+            cout << "--> q" << e.to << "\n";
+        }
 
-    for (int i = 0; i < stateCount; i++) {
-        cout << "q" << i;
-        if (i == result.start) cout << "(start)";
-        if (i == result.accept) cout << "(final)";
-        cout << "\t";
-        for (int a = 0; a <= M; a++) {
-            cout << "{";
-            bool f = true;
-            for (int s : delta[i][a]) { if (!f) cout << ","; cout << s; f = false; }
-            cout << "}\t\t";
+        map<char,int> symIdx;
+        for (int i=0;i<(int)alpha.size();i++) symIdx[alpha[i]]=i;
+        int M=(int)alpha.size();
+        vector<vector<set<int>>> delta(stateCount, vector<set<int>>(M+1));
+        for (auto& e : edges) {
+            if (e.sym=='\0') delta[e.from][M].insert(e.to);
+            else delta[e.from][symIdx[e.sym]].insert(e.to);
+        }
+        cout << "\nTransition table (NFA):\nState\t";
+        for (char c:alpha) cout<<c<<"\t\t"; cout<<"lambda\n"<<string(50,'-')<<"\n";
+        for (int i=0;i<stateCount;i++) {
+            cout<<"q"<<i; if (i==result.start) cout<<"(start)"; if (i==result.accept) cout<<"(final)"; cout<<"\t";
+            for (int a=0;a<=M;a++) { cout<<"{"; bool f=true; for (int s:delta[i][a]) { if (!f) cout<<","; cout<<s; f=false; } cout<<"}\t\t"; }
+            cout<<"\n";
         }
         cout << "\n";
-    }
 
+        cout.rdbuf(oldBuf);
+    }
     return 0;
 }

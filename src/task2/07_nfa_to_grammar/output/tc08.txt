@@ -1,0 +1,18 @@
+=== tc08.txt ===
+NFA: 3 states, alphabet={a,b}, initial=q0, finals={q1}
+=== Right-Linear Grammar G_R ===
+Variables: {q0,q1,q2}
+Terminals: {a,b}
+Start symbol: q0
+Productions:
+  q0 -> a q1
+  q1 -> b q2
+  q2 -> a q1
+  q1 -> lambda
+
+Summary of grammar productions:
+----------------------------------------
+q0 -> aq1
+q1 -> bq2 | lambda
+q2 -> aq1
+
