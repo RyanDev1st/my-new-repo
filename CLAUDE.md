@@ -1,4 +1,5 @@
 # CLAUDE.md
+# PROJECT OVERVIEW
 This project is to aim and address C:\Users\admin\automata\resources\GOAL.md
 Finish it completely
 
@@ -19,10 +20,16 @@ All changes will be reviewed and judged by codex.
 
 <!-- rtk-instructions v2 -->
 # RTK (Rust Token Killer) - Token-Optimized Commands
-
+## RTK Usage
+  - Use `rtk` direct commands for repo operations like `rtk git status`, `rtk git diff`, `rtk gh ...`, `rtk verify`, and `rtk init --show`.
+  - Do not treat `rtk` hook warnings as a blocker for normal work on Windows.
+  - The hook layer is optional and separate from the direct `rtk` commands. If `rtk` subcommands work, proceed with them.
+  - Only troubleshoot RTK hook installation if the user explicitly asks for hook setup or the command itself fails.
+  - On Windows, expect RTK to fall back from hook-based mode; use direct `rtk` commands and do not spend time chasing hook installation unless required.
 ## Golden Rule
 
 **Always prefix commands with `rtk`**. If RTK has a dedicated filter, it uses it. If not, it passes through unchanged. This means RTK is always safe to use.
+
 
 **Important**: Even in command chains with `&&`, use `rtk`:
 ```bash

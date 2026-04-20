@@ -44,9 +44,11 @@ automata/
 
 **Features**:
 - User-editable DFA definition (alphabet, transitions, initial/final states)
+- Inline `?` tooltip explaining transition syntax (`from symbol to`)
 - Test string input with step-by-step animation
 - Canvas rendering: states as circles, transitions as labeled arrows, self-loops
 - Color-coded current state (blue highlight), accepted (green), rejected (red)
+- Accepted runs end with a bright green final-state highlight on the terminal accepting node
 - Step mode (manual) and Run mode (auto, configurable speed)
 - Trace log showing every state transition
 
@@ -72,11 +74,18 @@ f0 f1 ...
 [K + strings]    # 01 only: test strings
 ```
 
+For `01_dfa_acceptance`, each test string is read from its own line.
+Use a blank line or `""` to represent the empty string.
+
 **NFA** (programs 02, 03, 07):
 Same as DFA but `sym_idx = M` means lambda transition.
 
+For `02_nfa_extended`, each query line is `q [w]`.
+Use `q` alone or `q ""` to compute `delta*(q, "")`.
+
 **RE** (program 05): single regex line.
 Operators: `+` union, `*` star, `()` grouping, `~` lambda. Concat is implicit.
+An empty regex line is rejected; use `~` when the intended input is lambda.
 
 **Grammar** (program 06):
 ```
@@ -87,6 +96,8 @@ t0 t1 ...
 P_count
 LHS_idx t_idx... [rhs_var_idx | -1]   # -1 = terminal-only production
 ```
+
+All console programs now fail fast with `Input error:` when `input.txt` is empty or missing the required header fields, instead of continuing with undefined data.
 
 ---
 

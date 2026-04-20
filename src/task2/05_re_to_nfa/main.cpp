@@ -5,6 +5,7 @@
 //   regex_string
 //   (use + for union, * for Kleene star, concatenation is implicit,
 //    () for grouping, ~ for lambda/epsilon)
+//   Empty input is invalid; use ~ for lambda.
 //
 // Grammar parsed:
 //   expr   -> term ('+' term)*
@@ -143,10 +144,18 @@ int main() {
     ifstream fin("input.txt");
     if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
 
-    getline(fin, re);
+    if (!getline(fin, re)) {
+        cerr << "Input error: input.txt is empty. Provide a regular expression.\n";
+        return 1;
+    }
     // strip trailing whitespace/cr
     while (!re.empty() && (re.back() == '\r' || re.back() == '\n' || re.back() == ' '))
         re.pop_back();
+
+    if (re.empty()) {
+        cerr << "Input error: regular expression is empty. Use '~' to represent lambda.\n";
+        return 1;
+    }
 
     cout << "Regular expression: " << re << "\n\n";
 

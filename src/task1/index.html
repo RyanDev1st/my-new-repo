@@ -16,6 +16,40 @@
   .panel-main { flex: 1; min-width: 340px; }
 
   label { font-size: 0.82rem; color: #a0c4ff; display: block; margin-bottom: 4px; }
+  .label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .label-row label { margin-bottom: 0; }
+  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .help-tip {
+    width: 22px; height: 22px; border-radius: 999px; border: 1px solid #5fa8ff;
+    background: #10345d; color: #bfe1ff; font-size: 0.8rem; font-weight: 700;
+    padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .help-tip:hover, .help-tip:focus-visible { background: #164a83; border-color: #8fc6ff; outline: none; }
+  .tooltip-box {
+    position: absolute; top: calc(100% + 8px); right: 0; width: 250px;
+    padding: 10px 12px; border-radius: 8px; border: 1px solid #335b88;
+    background: #0b1830; color: #d9ecff; font-size: 0.78rem; line-height: 1.45;
+    opacity: 0; pointer-events: none; transform: translateY(-4px);
+    transition: opacity 0.18s ease, transform 0.18s ease; z-index: 20;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  }
+  .tooltip-box strong { color: #bfe1ff; }
+  .tooltip-box code, .field-hint code {
+    color: #80ed99; font-family: Consolas, monospace;
+  }
+  .tooltip-wrap:hover .tooltip-box,
+  .tooltip-wrap:focus-within .tooltip-box {
+    opacity: 1; transform: translateY(0);
+  }
+  .field-hint {
+    margin-bottom: 8px; color: #8eb4da; font-size: 0.76rem;
+  }
   input, textarea, select {
     width: 100%; background: #0f3460; border: 1px solid #444; border-radius: 6px;
     color: #eee; padding: 6px 10px; font-size: 0.85rem; margin-bottom: 10px;
@@ -74,10 +108,35 @@
   <!-- Left: definition panel -->
   <div class="panel panel-left">
     <div class="section-title">DFA Definition</div>
+    <div class="label-row">
     <label>Alphabet (space-separated)</label>
+    <div class="tooltip-wrap">
+        <button type="button" class="help-tip" aria-label="Show DFA transition syntax help">?</button>
+        <div class="tooltip-box" role="note">
+          <strong>Syntax:</strong> each letter is separated by a space<br>
+          <br>
+          Example: <code>a b c</code> means your alphabet is <code>{a, b, c}</code>.<br>
+          <br>
+          <code> THIS IS ONLY FOR LOGGING (DEMONSTRATION). This has no functionality :O</code>
+        </div>
+      </div>
+      </div>
     <input type="text" id="alpha-input" value="a b" />
 
-    <label>Transitions (one per line: from symbol to)</label>
+    <div class="label-row">
+      <label for="trans-input">Transitions</label>
+      <div class="tooltip-wrap">
+        <button type="button" class="help-tip" aria-label="Show DFA transition syntax help">?</button>
+        <div class="tooltip-box" role="note">
+          <strong>Syntax:</strong> one transition per line<br>
+          <code>from symbol to</code><br>
+          Example: <code>0 a 1</code> means q0 --a--> q1<br>
+          <br>
+          The number of states is dictated by the table. E.g if you have both 0 1 2 and 3 in your table then you have 4 states <code> q0 q1 q2 q3 </code>!
+        </div>
+      </div>
+    </div>
+    <div class="field-hint">Write each line as <code>from symbol to</code>. Example: <code>2 c 3</code></div>
     <textarea id="trans-input" rows="8">0 a 1
 0 b 0
 1 a 1
@@ -144,6 +203,7 @@ const ctx = canvas.getContext('2d');
 let statePos = {}; // state -> {x, y}
 let highlightState = -1;
 let highlightEdge = null; // {from, sym, to}
+let acceptedFinalState = -1;
 let animTimer = null;
 let animStep = 0;
 let animString = '';
@@ -340,7 +400,8 @@ function drawDFA() {
     const p = statePos[s];
     if (!p) continue;
 
-    const isHighlight = s === highlightState;
+    const isAcceptedFinal = s === acceptedFinalState;
+    const isHighlight = s === highlightState && !isAcceptedFinal;
     const isFinal = dfa.finals.has(s);
     const isInit = s === dfa.q0;
 
@@ -353,24 +414,33 @@ function drawDFA() {
       ctx.beginPath(); ctx.arc(p.x, p.y, SR, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
+    if (isAcceptedFinal) {
+      ctx.save();
+      ctx.shadowColor = '#80ed99';
+      ctx.shadowBlur = 26;
+      ctx.strokeStyle = '#80ed99';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(p.x, p.y, SR + 1, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
 
     // Fill
     ctx.beginPath(); ctx.arc(p.x, p.y, SR, 0, Math.PI * 2);
-    ctx.fillStyle = isHighlight ? '#1a3a5c' : '#1a2a3c';
+    ctx.fillStyle = isAcceptedFinal ? '#163a27' : (isHighlight ? '#1a3a5c' : '#1a2a3c');
     ctx.fill();
-    ctx.strokeStyle = isHighlight ? '#4cc9f0' : (isFinal ? '#80ed99' : '#556677');
-    ctx.lineWidth = isHighlight ? 3 : 2;
+    ctx.strokeStyle = isAcceptedFinal ? '#80ed99' : (isHighlight ? '#4cc9f0' : (isFinal ? '#80ed99' : '#556677'));
+    ctx.lineWidth = isAcceptedFinal ? 3.5 : (isHighlight ? 3 : 2);
     ctx.stroke();
 
     // Final state: double circle
     if (isFinal) {
       ctx.beginPath(); ctx.arc(p.x, p.y, SR - 5, 0, Math.PI * 2);
-      ctx.strokeStyle = isHighlight ? '#4cc9f0' : '#80ed99';
+      ctx.strokeStyle = isAcceptedFinal ? '#9dffb3' : (isHighlight ? '#4cc9f0' : '#80ed99');
       ctx.lineWidth = 1.5; ctx.stroke();
     }
 
     // State label
-    ctx.fillStyle = isHighlight ? '#4cc9f0' : '#ddd';
+    ctx.fillStyle = isAcceptedFinal ? '#d7ffe2' : (isHighlight ? '#4cc9f0' : '#ddd');
     ctx.font = `bold 14px monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -460,11 +530,17 @@ function finishAnim() {
   const last = animPath[animPath.length - 1];
   const msgEl = document.getElementById('msg');
   if (last.state === -1) return; // already handled
+  acceptedFinalState = -1;
   const accepted = dfa.finals.has(last.state);
   if (accepted) {
+    acceptedFinalState = last.state;
+    highlightState = -1;
+    highlightEdge = null;
+    drawDFA();
     msgEl.innerHTML = `<span class="accept">✓ ACCEPTED — ended in final state q${last.state}</span>`;
     log('=> ACCEPTED');
   } else {
+    drawDFA();
     msgEl.innerHTML = `<span class="reject">✗ REJECTED — ended in non-final state q${last.state}</span>`;
     log('=> REJECTED');
   }
@@ -515,6 +591,7 @@ function resetAnim() {
   animStep = 0;
   animPath = [];
   animString = '';
+  acceptedFinalState = -1;
   highlightState = dfa ? dfa.q0 : -1;
   highlightEdge = null;
   document.getElementById('sym-row').innerHTML = '';

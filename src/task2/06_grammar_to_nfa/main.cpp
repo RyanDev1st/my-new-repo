@@ -29,15 +29,37 @@ int main() {
     ifstream fin("input.txt");
     if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
 
-    int V; fin >> V;
+    int V;
+    if (!(fin >> V)) {
+        cerr << "Input error: input.txt is empty or missing the grammar header.\n";
+        return 1;
+    }
     vector<string> varNames(V);
-    for (int i = 0; i < V; i++) fin >> varNames[i];
+    for (int i = 0; i < V; i++) {
+        if (!(fin >> varNames[i])) {
+            cerr << "Input error: missing variable names.\n";
+            return 1;
+        }
+    }
 
-    int T; fin >> T;
+    int T;
+    if (!(fin >> T)) {
+        cerr << "Input error: missing number of terminals.\n";
+        return 1;
+    }
     vector<char> term(T);
-    for (int i = 0; i < T; i++) fin >> term[i];
+    for (int i = 0; i < T; i++) {
+        if (!(fin >> term[i])) {
+            cerr << "Input error: missing terminal symbols.\n";
+            return 1;
+        }
+    }
 
-    int P; fin >> P;
+    int P;
+    if (!(fin >> P)) {
+        cerr << "Input error: missing number of productions.\n";
+        return 1;
+    }
 
     // S1: Each variable Vi -> state i; add one shared final state Vf (index V)
     // S2: Initial state = S = state 0 (first variable)
@@ -61,7 +83,11 @@ int main() {
     cout << "Productions and NFA transitions:\n";
 
     for (int p = 0; p < P; p++) {
-        int lhs; fin >> lhs;
+        int lhs;
+        if (!(fin >> lhs)) {
+            cerr << "Input error: missing left-hand side for production " << (p + 1) << ".\n";
+            return 1;
+        }
 
         // Read terminals of the RHS
         vector<int> terminals;
@@ -87,6 +113,12 @@ int main() {
                 }
                 if (hasNum) tokens.push_back(neg ? -num : num);
             }
+        }
+
+        if (tokens.empty()) {
+            cerr << "Input error: production " << (p + 1)
+                 << " is missing its right-hand side.\n";
+            return 1;
         }
 
         // Last token: -1 = terminal-only, else = variable index

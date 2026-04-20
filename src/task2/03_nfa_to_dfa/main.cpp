@@ -53,18 +53,48 @@ set<int> moveSet(const set<int>& T, int sym, const NFA& nfa) {
 
 NFA readNFA(ifstream& fin) {
     NFA nfa;
-    fin >> nfa.N >> nfa.M;
+    if (!(fin >> nfa.N >> nfa.M)) {
+        cerr << "Input error: input.txt is empty or missing the NFA header.\n";
+        return {};
+    }
     nfa.alpha.resize(nfa.M);
-    for (int i = 0; i < nfa.M; i++) fin >> nfa.alpha[i];
+    for (int i = 0; i < nfa.M; i++) {
+        if (!(fin >> nfa.alpha[i])) {
+            cerr << "Input error: missing alphabet symbols.\n";
+            return {};
+        }
+    }
     nfa.delta.assign(nfa.N, vector<set<int>>(nfa.M + 1));
-    int E; fin >> E;
+    int E;
+    if (!(fin >> E)) {
+        cerr << "Input error: missing number of NFA transitions.\n";
+        return {};
+    }
     for (int i = 0; i < E; i++) {
-        int from, sym, to; fin >> from >> sym >> to;
+        int from, sym, to;
+        if (!(fin >> from >> sym >> to)) {
+            cerr << "Input error: incomplete NFA transition list.\n";
+            return {};
+        }
         nfa.delta[from][sym].insert(to);
     }
-    fin >> nfa.q0;
-    int Fc; fin >> Fc;
-    for (int i = 0; i < Fc; i++) { int f; fin >> f; nfa.F.insert(f); }
+    if (!(fin >> nfa.q0)) {
+        cerr << "Input error: missing initial state.\n";
+        return {};
+    }
+    int Fc;
+    if (!(fin >> Fc)) {
+        cerr << "Input error: missing number of final states.\n";
+        return {};
+    }
+    for (int i = 0; i < Fc; i++) {
+        int f;
+        if (!(fin >> f)) {
+            cerr << "Input error: incomplete final-state list.\n";
+            return {};
+        }
+        nfa.F.insert(f);
+    }
     return nfa;
 }
 
@@ -80,6 +110,7 @@ int main() {
     if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
 
     NFA nfa = readNFA(fin);
+    if (!fin) return 1;
 
     cout << "NFA: " << nfa.N << " states, alphabet = {";
     for (int i = 0; i < nfa.M; i++) { if (i) cout << ","; cout << nfa.alpha[i]; }

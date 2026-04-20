@@ -27,19 +27,49 @@ struct DFA {
 
 DFA readDFA(ifstream& fin) {
     DFA dfa;
-    fin >> dfa.N >> dfa.M;
+    if (!(fin >> dfa.N >> dfa.M)) {
+        cerr << "Input error: input.txt is empty or missing the DFA header.\n";
+        return {};
+    }
     dfa.alpha.resize(dfa.M);
-    for (int i = 0; i < dfa.M; i++) fin >> dfa.alpha[i];
+    for (int i = 0; i < dfa.M; i++) {
+        if (!(fin >> dfa.alpha[i])) {
+            cerr << "Input error: missing alphabet symbols.\n";
+            return {};
+        }
+    }
     dfa.delta.assign(dfa.N, vector<int>(dfa.M, -1));
-    int E; fin >> E;
+    int E;
+    if (!(fin >> E)) {
+        cerr << "Input error: missing number of DFA transitions.\n";
+        return {};
+    }
     for (int i = 0; i < E; i++) {
-        int from, sym, to; fin >> from >> sym >> to;
+        int from, sym, to;
+        if (!(fin >> from >> sym >> to)) {
+            cerr << "Input error: incomplete DFA transition list.\n";
+            return {};
+        }
         dfa.delta[from][sym] = to;
     }
-    fin >> dfa.q0;
-    int Fc; fin >> Fc;
+    if (!(fin >> dfa.q0)) {
+        cerr << "Input error: missing initial state.\n";
+        return {};
+    }
+    int Fc;
+    if (!(fin >> Fc)) {
+        cerr << "Input error: missing number of final states.\n";
+        return {};
+    }
     dfa.isFinal.assign(dfa.N, false);
-    for (int i = 0; i < Fc; i++) { int f; fin >> f; dfa.isFinal[f] = true; }
+    for (int i = 0; i < Fc; i++) {
+        int f;
+        if (!(fin >> f)) {
+            cerr << "Input error: incomplete final-state list.\n";
+            return {};
+        }
+        dfa.isFinal[f] = true;
+    }
     return dfa;
 }
 
@@ -48,6 +78,7 @@ int main() {
     if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
 
     DFA dfa = readDFA(fin);
+    if (!fin) return 1;
     int N = dfa.N;
 
     cout << "Input DFA: " << N << " states, alphabet = {";

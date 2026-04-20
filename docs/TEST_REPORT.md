@@ -3,25 +3,31 @@
 ## Environment
 
 - Compiler: g++ 13.2.0 (MSYS2 UCRT64) at `C:\msys64\ucrt64\bin\g++.exe`
-- All programs compile and run correctly as of 2026-04-19.
+- Verification rerun on 2026-04-19.
+- All programs compile and run correctly with their sample inputs.
+- All console programs now reject empty `input.txt` files with an `Input error:` message instead of crashing or printing garbage output.
 
 ## Quick Start
 
-Open a terminal and run (one-liner for all):
+Open PowerShell and run:
 
-```bash
-export PATH="/c/msys64/ucrt64/bin:/c/msys64/usr/bin:$PATH"
-BASE="C:/Users/admin/automata/src/task2"
-for d in 01_dfa_acceptance 02_nfa_extended 03_nfa_to_dfa 04_dfa_minimize 05_re_to_nfa 06_grammar_to_nfa 07_nfa_to_grammar; do
-  echo "=== $d ===" && (cd "$BASE/$d" && g++ -std=c++17 main.cpp -o prog.exe && ./prog.exe)
-done
+```powershell
+$env:PATH = "C:\msys64\ucrt64\bin;C:\msys64\usr\bin;$env:PATH"
+$base = "C:\Users\admin\automata\src\task2"
+$dirs = "01_dfa_acceptance","02_nfa_extended","03_nfa_to_dfa","04_dfa_minimize","05_re_to_nfa","06_grammar_to_nfa","07_nfa_to_grammar"
+foreach ($d in $dirs) {
+  Push-Location (Join-Path $base $d)
+  & "C:\msys64\ucrt64\bin\g++.exe" -std=c++17 main.cpp -o prog.exe
+  .\prog.exe
+  Pop-Location
+}
 ```
 
 Or compile + run individually:
-```bash
-cd C:/Users/admin/automata/src/task2/01_dfa_acceptance
-g++ -std=c++17 main.cpp -o prog.exe
-./prog.exe
+```powershell
+Set-Location C:\Users\admin\automata\src\task2\01_dfa_acceptance
+& "C:\msys64\ucrt64\bin\g++.exe" -std=c++17 main.cpp -o prog.exe
+.\prog.exe
 ```
 
 ## Task 1 — Visualization
@@ -30,16 +36,20 @@ Open `src/task1/index.html` directly in any browser (no server needed).
 
 Features to test:
 1. Click "Build DFA" — automaton renders on canvas
-2. Enter a string ("abab") and click "▶ Run" — watch step-by-step animation
-3. Click "⏭ Step" for manual stepping
-4. Try a string NOT accepted ("ba") — should end in red REJECTED
-5. Edit transitions in the textarea — rebuild and re-test
+2. Hover or focus the `?` beside Transitions — syntax tooltip should appear
+3. Confirm the tooltip example `0 a 1` matches the actual input format
+4. Enter a string ("abab") and click "▶ Run" — watch step-by-step animation
+5. Accepted run should end with the final accepting state highlighted bright green
+6. Click "⏭ Step" for manual stepping
+7. Try a string NOT accepted ("ba") — should end in red REJECTED
+8. Edit transitions in the textarea — rebuild and re-test
 
 ## Task 2 — All 7 Programs (Status: PASSED)
 
 ### 01 — DFA Acceptance
 Input: DFA over {a,b} accepting strings ending in "ab"
 ```
+""     → REJECTED  ✓
 "ab"   → ACCEPTED  ✓
 "aab"  → ACCEPTED  ✓
 "ba"   → REJECTED  ✓
@@ -50,6 +60,7 @@ Input: DFA over {a,b} accepting strings ending in "ab"
 ### 02 — NFA Extended Transition Function
 Input: NFA accepting strings containing "ab" as substring
 ```
+delta*(0, "")    → {0}    [REJECTED]  ✓
 delta*(0, "ab")  → {0,2}  [ACCEPTED]  ✓
 delta*(0, "b")   → {0}    [REJECTED]  ✓
 delta*(0, "aab") → {0,2}  [ACCEPTED]  ✓
@@ -86,3 +97,9 @@ Correct per nfa2G_R algorithm (S1/S2/S3 from slides 44-45) ✓
 
 Edit `input.txt` in the corresponding directory and re-run `./prog.exe`.
 Input format is documented at the top of each `main.cpp`.
+
+Edge-case notes:
+- `01_dfa_acceptance`: use a blank line or `""` for the empty string.
+- `02_nfa_extended`: use `q` alone or `q ""` for the empty string query.
+- `05_re_to_nfa`: use `~` for lambda; an empty regex line is treated as invalid input.
+- All console programs now stop with `Input error:` if `input.txt` is empty.

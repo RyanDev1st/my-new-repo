@@ -11,42 +11,84 @@
 //   f0 f1 ...            -- final states
 //   K                    -- number of test strings
 //   w0 w1 ...            -- test strings (one per line)
+//                           use a blank line or "" for the empty string
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
+#include <cctype>
 using namespace std;
+
+string trim(const string& s) {
+    size_t start = 0;
+    while (start < s.size() && isspace(static_cast<unsigned char>(s[start]))) start++;
+
+    size_t end = s.size();
+    while (end > start && isspace(static_cast<unsigned char>(s[end - 1]))) end--;
+
+    return s.substr(start, end - start);
+}
+
+string parseInputWord(const string& raw) {
+    string word = trim(raw);
+    if (word == "\"\"") return "";
+    return word;
+}
 
 int main() {
     ifstream fin("input.txt");
     if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
 
     int N, M;
-    fin >> N >> M;
+    if (!(fin >> N >> M)) {
+        cerr << "Input error: input.txt is empty or missing the DFA header.\n";
+        return 1;
+    }
 
     vector<char> alpha(M);
-    for (int i = 0; i < M; i++) fin >> alpha[i];
+    for (int i = 0; i < M; i++) {
+        if (!(fin >> alpha[i])) {
+            cerr << "Input error: missing alphabet symbols.\n";
+            return 1;
+        }
+    }
 
     // delta[state][sym_idx] = next state, -1 = dead/trap
     vector<vector<int>> delta(N, vector<int>(M, -1));
 
     int E;
-    fin >> E;
+    if (!(fin >> E)) {
+        cerr << "Input error: missing number of DFA transitions.\n";
+        return 1;
+    }
     for (int i = 0; i < E; i++) {
         int from, sym, to;
-        fin >> from >> sym >> to;
+        if (!(fin >> from >> sym >> to)) {
+            cerr << "Input error: incomplete DFA transition list.\n";
+            return 1;
+        }
         delta[from][sym] = to;
     }
 
     int q0;
-    fin >> q0;
+    if (!(fin >> q0)) {
+        cerr << "Input error: missing initial state.\n";
+        return 1;
+    }
 
     int Fc;
-    fin >> Fc;
+    if (!(fin >> Fc)) {
+        cerr << "Input error: missing number of final states.\n";
+        return 1;
+    }
     vector<bool> isFinal(N, false);
     for (int i = 0; i < Fc; i++) {
-        int f; fin >> f;
+        int f;
+        if (!(fin >> f)) {
+            cerr << "Input error: incomplete final-state list.\n";
+            return 1;
+        }
         isFinal[f] = true;
     }
 
@@ -61,12 +103,23 @@ int main() {
     cout << "}\n\n";
 
     int K;
-    fin >> K;
-    while (K--) {
-        string w;
-        fin >> w;
+    if (!(fin >> K)) {
+        cerr << "Input error: missing number of test strings.\n";
+        return 1;
+    }
 
-        cout << "Input: \"" << w << "\"\n";
+    string line;
+    getline(fin, line); // consume the newline after K
+
+    for (int caseNo = 0; caseNo < K; caseNo++) {
+        if (!getline(fin, line)) {
+            cerr << "Input error: missing test string on line " << (caseNo + 1) << ".\n";
+            return 1;
+        }
+        string w = parseInputWord(line);
+        string shown = w.empty() ? "\"\"" : w;
+
+        cout << "Input: " << shown << "\n";
         cout << "  Steps: q" << q0;
 
         int cur = q0;

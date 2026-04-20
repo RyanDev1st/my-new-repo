@@ -22,24 +22,55 @@ int main() {
     if (!fin) { cerr << "Cannot open input.txt\n"; return 1; }
 
     int N, M;
-    fin >> N >> M;
+    if (!(fin >> N >> M)) {
+        cerr << "Input error: input.txt is empty or missing the NFA header.\n";
+        return 1;
+    }
 
     vector<char> alpha(M);
-    for (int i = 0; i < M; i++) fin >> alpha[i];
+    for (int i = 0; i < M; i++) {
+        if (!(fin >> alpha[i])) {
+            cerr << "Input error: missing alphabet symbols.\n";
+            return 1;
+        }
+    }
 
     // delta[state][sym] = set of next states; sym=M is lambda
     vector<vector<set<int>>> delta(N, vector<set<int>>(M + 1));
 
-    int E; fin >> E;
+    int E;
+    if (!(fin >> E)) {
+        cerr << "Input error: missing number of NFA transitions.\n";
+        return 1;
+    }
     for (int i = 0; i < E; i++) {
-        int from, sym, to; fin >> from >> sym >> to;
+        int from, sym, to;
+        if (!(fin >> from >> sym >> to)) {
+            cerr << "Input error: incomplete NFA transition list.\n";
+            return 1;
+        }
         delta[from][sym].insert(to);
     }
 
-    int q0; fin >> q0;
-    int Fc; fin >> Fc;
+    int q0;
+    if (!(fin >> q0)) {
+        cerr << "Input error: missing initial state.\n";
+        return 1;
+    }
+    int Fc;
+    if (!(fin >> Fc)) {
+        cerr << "Input error: missing number of final states.\n";
+        return 1;
+    }
     vector<bool> isFinal(N, false);
-    for (int i = 0; i < Fc; i++) { int f; fin >> f; isFinal[f] = true; }
+    for (int i = 0; i < Fc; i++) {
+        int f;
+        if (!(fin >> f)) {
+            cerr << "Input error: incomplete final-state list.\n";
+            return 1;
+        }
+        isFinal[f] = true;
+    }
 
     cout << "NFA: " << N << " states, alphabet={";
     for (int i = 0; i < M; i++) { if (i) cout << ","; cout << alpha[i]; }
