@@ -1,8 +1,6 @@
-2 2
-a b
-2
-q0 a q1
-q1 b q0
-q0
-1
-q0
+alphabet a b
+transitions 2
+0 a 0
+0 b 1
+initial 0
+finals 0

@@ -1,25 +1,44 @@
 === tc10.txt ===
-Input DFA: 4 states, alphabet = {a,b,c}, initial=q0
-Accessible: {q0,q1}
-Inaccessible: {q2,q3}
+Input DFA: 6 states, alphabet = {a,b}, initial=q0
+Accessible: {q0,q1,q2,q3,q4,q5}
+Inaccessible: {}
 mark() procedure:
 S2: Initial marking:
-    mark(q0, q1)
-    mark(q1, dead)
+    mark(q0, q4)
+    mark(q0, q5)
+    mark(q1, q4)
+    mark(q1, q5)
+    mark(q2, q4)
+    mark(q2, q5)
+    mark(q3, q4)
+    mark(q3, q5)
+    mark(q4, dead)
+    mark(q5, dead)
   Pass 1:
-    mark(q0, dead) via a
+    mark(q0, q1) via a
+    mark(q0, q2) via a
+    mark(q0, q3) via a
+    mark(q1, q3) via b
+    mark(q1, dead) via a
+    mark(q2, q3) via b
+    mark(q2, dead) via a
+    mark(q3, dead) via a
   Pass 2:
+    mark(q0, dead) via a
+  Pass 3:
     (stable)
 
-Indistinguishable: (none)
+Indistinguishable: (q1,q2), (q4,q5)
 === Minimized DFA ===
-States: 2
+States: 4
 Transition table:
-Class		States		on a		on b		on c		
+Class		States		on a		on b		
 ----------------------------------------------------------------------
-C0(init)		{q0}		C1		C0		C0		
-C1(final)		{q1}		C1		C1		C1		
+C0(init)		{q0}		C1		C1		
+C1		{q1,q2}		C3		C2		
+C2		{q3}		C3		C3		
+C3(final)		{q4,q5}		C3		C3		
 
 Initial state: C0
-Final states: C1 
+Final states: C3 
 

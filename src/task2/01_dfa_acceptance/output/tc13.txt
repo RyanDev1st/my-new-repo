@@ -1,0 +1,25 @@
+=== tc13.txt ===
+DFA: 2 states, alphabet = {a,b}
+Initial: q0  Final: {q1}
+
+Input: a
+  Steps: q0 --a--> q1
+  Result: ACCEPTED
+
+Input: aa
+  Steps: q0 --a--> q1 --a--> q1
+  Result: ACCEPTED
+
+Input: ab
+  Steps: q0 --a--> q1 --b--> DEAD
+  Result: REJECTED (dead state)
+
+Input: bab
+  Steps: q0 --b--> q0 --a--> q1 --b--> DEAD
+  Result: REJECTED (dead state)
+
+Input: bbb
+  Steps: q0 --b--> q0 --b--> q0 --b--> q0
+  Result: REJECTED (non-final state q0)
+
+

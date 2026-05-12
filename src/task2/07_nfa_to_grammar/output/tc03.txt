@@ -1,16 +1,14 @@
 === tc03.txt ===
-NFA: 2 states, alphabet={a,b}, initial=q0, finals={q1}
+NFA: 1 states, alphabet={a}, initial=q0, finals={q0}
 === Right-Linear Grammar G_R ===
-Variables: {q0,q1}
-Terminals: {a,b}
+Variables: {q0}
+Terminals: {a}
 Start symbol: q0
 Productions:
   q0 -> a q0
-  q0 -> b q1
-  q1 -> lambda
+  q0 -> lambda
 
 Summary of grammar productions:
 ----------------------------------------
-q0 -> aq0 | bq1
-q1 -> lambda
+q0 -> aq0 | lambda
 

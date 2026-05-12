@@ -1,0 +1,43 @@
+=== tc15.txt ===
+Regular expression: a*(ba+ab)
+Thompson's construction result:
+  Total states: 14 (0..13)
+  Start state:  2
+  Accept state: 13
+  Alphabet: {a,b}
+Transitions:
+  q0 --a--> q1
+  q2 --lambda--> q0
+  q1 --lambda--> q3
+  q2 --lambda--> q3
+  q1 --lambda--> q0
+  q4 --b--> q5
+  q6 --a--> q7
+  q5 --lambda--> q6
+  q8 --a--> q9
+  q10 --b--> q11
+  q9 --lambda--> q10
+  q12 --lambda--> q4
+  q12 --lambda--> q8
+  q7 --lambda--> q13
+  q11 --lambda--> q13
+  q3 --lambda--> q12
+
+Transition table (NFA):
+State	a		b		lambda
+--------------------------------------------------
+q0	{1}		{}		{}		
+q1	{}		{}		{0,3}		
+q2(start)	{}		{}		{0,3}		
+q3	{}		{}		{12}		
+q4	{}		{5}		{}		
+q5	{}		{}		{6}		
+q6	{7}		{}		{}		
+q7	{}		{}		{13}		
+q8	{9}		{}		{}		
+q9	{}		{}		{10}		
+q10	{}		{11}		{}		
+q11	{}		{}		{13}		
+q12	{}		{}		{4,8}		
+q13(final)	{}		{}		{}		
+

@@ -3,653 +3,1019 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DFA String Acceptance Visualization</title>
+<meta name="description" content="DFA String Acceptance — local tactical telemetry visualizer with robust transition-table graph rendering.">
+<title>DFA Tactical Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
-  h1 { text-align: center; padding: 18px; font-size: 1.5rem; color: #a0c4ff; letter-spacing: 1px; border-bottom: 1px solid #333; }
-  .container { display: flex; gap: 16px; padding: 16px; flex-wrap: wrap; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Left panel: DFA definition */
-  .panel { background: #16213e; border-radius: 10px; padding: 16px; }
-  .panel-left { flex: 0 0 320px; }
-  .panel-main { flex: 1; min-width: 340px; }
+:root {
+  --bg: #0a0a0a;
+  --panel: #111111;
+  --panel-2: #171717;
+  --panel-3: #202020;
+  --ink: #eaeaea;
+  --muted: #9a9a9a;
+  --quiet: #6f6f6f;
+  --line: #343434;
+  --line-strong: #5b5b5b;
+  --red: #e61919;
+  --green: #4af626;
+  --black: #050505;
+  --font-display: 'Archivo Black', 'Arial Black', Impact, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
 
-  label { font-size: 0.82rem; color: #a0c4ff; display: block; margin-bottom: 4px; }
-  .label-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-  .label-row label { margin-bottom: 0; }
-  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
-  .help-tip {
-    width: 22px; height: 22px; border-radius: 999px; border: 1px solid #5fa8ff;
-    background: #10345d; color: #bfe1ff; font-size: 0.8rem; font-weight: 700;
-    padding: 0; display: inline-flex; align-items: center; justify-content: center;
-  }
-  .help-tip:hover, .help-tip:focus-visible { background: #164a83; border-color: #8fc6ff; outline: none; }
-  .tooltip-box {
-    position: absolute; top: calc(100% + 8px); right: 0; width: 250px;
-    padding: 10px 12px; border-radius: 8px; border: 1px solid #335b88;
-    background: #0b1830; color: #d9ecff; font-size: 0.78rem; line-height: 1.45;
-    opacity: 0; pointer-events: none; transform: translateY(-4px);
-    transition: opacity 0.18s ease, transform 0.18s ease; z-index: 20;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-  }
-  .tooltip-box strong { color: #bfe1ff; }
-  .tooltip-box code, .field-hint code {
-    color: #80ed99; font-family: Consolas, monospace;
-  }
-  .tooltip-wrap:hover .tooltip-box,
-  .tooltip-wrap:focus-within .tooltip-box {
-    opacity: 1; transform: translateY(0);
-  }
-  .field-hint {
-    margin-bottom: 8px; color: #8eb4da; font-size: 0.76rem;
-  }
-  input, textarea, select {
-    width: 100%; background: #0f3460; border: 1px solid #444; border-radius: 6px;
-    color: #eee; padding: 6px 10px; font-size: 0.85rem; margin-bottom: 10px;
-  }
-  textarea { resize: vertical; font-family: monospace; font-size: 0.8rem; }
-  button {
-    padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer;
-    font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
-  }
-  .btn-primary { background: #4cc9f0; color: #000; }
-  .btn-primary:hover { background: #72d7f5; }
-  .btn-success { background: #80ed99; color: #000; }
-  .btn-success:hover { background: #a0f0b4; }
-  .btn-warning { background: #f4a261; color: #000; }
-  .btn-warning:hover { background: #f7b683; }
-  .btn-danger { background: #e63946; color: #fff; }
-  .btn-reset { background: #555; color: #fff; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+html { scroll-behavior: smooth; background: var(--bg); }
+body {
+  min-height: 100dvh;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.024) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 18% 12%, rgba(230,25,25,0.12), transparent 28rem),
+    #0a0a0a;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  line-height: 1.45;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0.13;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+}
 
-  /* Canvas area */
-  #canvas-wrap { position: relative; overflow: hidden; background: #0a0a1a; border-radius: 8px; border: 1px solid #333; }
-  canvas { display: block; }
+a { color: inherit; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
 
-  /* Step info */
-  #step-info { margin-top: 10px; background: #0f3460; border-radius: 8px; padding: 12px; min-height: 80px; }
-  #step-info .symbol-row { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
-  .sym-cell {
-    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-    border-radius: 6px; font-weight: bold; font-size: 1rem;
-    background: #1a2a4a; border: 2px solid #333;
-    transition: all 0.3s;
-  }
-  .sym-cell.done  { background: #1a4a2a; border-color: #80ed99; color: #80ed99; }
-  .sym-cell.current { background: #4a2a1a; border-color: #f4a261; color: #f4a261; transform: scale(1.15); }
-  .sym-cell.pending { opacity: 0.5; }
-  #msg { font-size: 0.9rem; margin-top: 6px; }
-  .accept { color: #80ed99; font-weight: bold; }
-  .reject { color: #e63946; font-weight: bold; }
-  .info   { color: #a0c4ff; }
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -80px;
+  z-index: 60;
+  background: var(--red);
+  color: white;
+  padding: 10px 14px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.skip-link:focus { top: 16px; }
 
-  #trace-log { margin-top: 10px; background: #0a0a1a; border-radius: 8px; padding: 10px;
-    font-family: monospace; font-size: 0.8rem; max-height: 140px; overflow-y: auto; }
-  #trace-log div { padding: 2px 0; border-bottom: 1px solid #1a1a2e; }
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  gap: 1px;
+  margin: 16px auto 0;
+  width: min(1440px, calc(100% - 32px));
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+}
+.nav > * {
+  background: rgba(17, 17, 17, 0.94);
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+}
+.brand {
+  gap: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+}
+.brand-mark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--red);
+  color: var(--red);
+}
+.brand small { color: var(--quiet); font-weight: 600; letter-spacing: 0.06em; }
+.nav-link {
+  color: var(--ink);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  transition: background 180ms var(--ease), color 180ms var(--ease);
+}
+.nav-link:hover { background: var(--red); color: white; }
+.nav-link:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+}
 
-  .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
-    color: #666; margin-bottom: 6px; margin-top: 2px; }
-  .speed-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .speed-row label { margin: 0; flex: 0 0 auto; }
-  input[type=range] { padding: 0; margin: 0; height: 4px; flex: 1; }
+.hero {
+  width: min(1440px, calc(100% - 32px));
+  margin: 56px auto 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+}
+.hero-copy, .hero-telemetry { background: var(--panel); padding: clamp(22px, 4vw, 56px); }
+.kicker, .section-eye, .field-label, .readout dt, .status-line {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.kicker { margin-bottom: 18px; color: var(--red); }
+.title {
+  max-width: 12ch;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 9.2vw, 10.5rem);
+  line-height: 0.86;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.lede {
+  max-width: 64ch;
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.hero-telemetry {
+  display: grid;
+  align-content: space-between;
+  gap: 30px;
+  min-height: 320px;
+}
+.scope-box {
+  border: 1px solid var(--line-strong);
+  min-height: 190px;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    var(--black);
+  background-size: 28px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.scope-box::before, .scope-box::after {
+  content: "";
+  position: absolute;
+  border: 1px solid var(--red);
+  width: 72px;
+  height: 72px;
+}
+.scope-box::before { left: 24px; top: 24px; border-right: 0; border-bottom: 0; }
+.scope-box::after { right: 24px; bottom: 24px; border-left: 0; border-top: 0; }
+.scope-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  background: var(--green);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 18px rgba(74, 246, 38, 0.72);
+}
+.readout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+}
+.readout > div { background: var(--panel-2); padding: 12px; }
+.readout dd { margin-top: 6px; color: var(--ink); font-weight: 800; font-size: 1.2rem; }
+.readout .live dd { color: var(--green); }
+
+main.grid {
+  width: min(1440px, calc(100% - 32px));
+  margin: 16px auto 96px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+}
+.shell { background: var(--line); padding: 1px; position: relative; }
+.shell::before, .shell::after {
+  content: "+";
+  position: absolute;
+  color: var(--red);
+  font: 700 12px/1 var(--font-mono);
+  z-index: 2;
+}
+.shell::before { top: -7px; left: -5px; }
+.shell::after { right: -5px; bottom: -7px; }
+.core { background: var(--panel); min-height: 100%; padding: clamp(18px, 2vw, 28px); }
+.card-canvas { grid-column: span 8; }
+.card-def { grid-column: span 4; }
+.card-test { grid-column: span 4; }
+.card-step { grid-column: span 8; }
+.card-trace { grid-column: span 12; }
+.section-eye { color: var(--ink); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.section-eye::before { content: "//"; color: var(--red); }
+
+.canvas-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip, .canvas-meta, .canvas-legend, .sym-cell {
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.chip { padding: 5px 9px; font-size: 0.68rem; color: var(--muted); }
+.chip strong { color: var(--ink); }
+.chip.live, .canvas-meta.live { color: var(--green); border-color: var(--green); }
+#canvas-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 14px;
+  background: var(--black);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+}
+canvas { display: block; width: 100%; }
+.canvas-meta {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 9px;
+  font-size: 0.68rem;
+  z-index: 3;
+}
+.canvas-legend {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 5px 9px;
+  font-size: 0.64rem;
+  color: var(--muted);
+  z-index: 3;
+}
+.canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.canvas-legend i { display: inline-block; width: 8px; height: 8px; background: var(--ink); }
+.canvas-legend .ll-final i, .canvas-legend .ll-active i { background: var(--green); }
+.canvas-legend .ll-error i { background: var(--red); }
+
+.field-label { display: block; margin: 14px 0 6px; }
+.field-hint { color: var(--quiet); font-size: 0.72rem; margin-bottom: 12px; }
+input[type="text"], textarea, select {
+  width: 100%;
+  background: var(--black);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 0;
+  transition: border-color 180ms var(--ease), background 180ms var(--ease);
+}
+textarea { resize: vertical; min-height: 150px; line-height: 1.65; }
+input:focus, textarea:focus, select:focus { background: var(--panel-2); border-color: var(--red); }
+select { cursor: pointer; }
+select option { background: var(--panel); color: var(--ink); }
+.label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.help-tip {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--muted);
+}
+.tooltip-wrap { position: relative; }
+.tooltip-box {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 270px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--black);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  z-index: 10;
+}
+.tooltip-box code { color: var(--green); }
+.tooltip-wrap:hover .tooltip-box, .tooltip-wrap:focus-within .tooltip-box { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.btn {
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: 10px 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  transition: transform 180ms var(--ease), background 180ms var(--ease), color 180ms var(--ease), border-color 180ms var(--ease);
+}
+.btn:hover { transform: translate(-2px, -2px); background: var(--red); border-color: var(--red); color: white; }
+.btn:active { transform: translate(0, 0); }
+.btn-primary { background: var(--ink); color: var(--black); }
+.btn-success { border-color: var(--green); color: var(--green); }
+.btn-danger { border-color: var(--red); color: var(--red); }
+
+.speed-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 10px 0 14px; }
+input[type="range"] { width: 100%; accent-color: var(--red); }
+#speed-val { color: var(--muted); font-size: 0.72rem; }
+.sym-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.sym-cell {
+  min-width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
+  font-weight: 800;
+}
+.sym-cell.done { color: var(--green); border-color: var(--green); }
+.sym-cell.current { color: var(--black); background: var(--green); border-color: var(--green); }
+.sym-cell.pending { opacity: 0.45; }
+#msg { color: var(--muted); font-size: 0.86rem; }
+.accept { color: var(--green); font-weight: 800; }
+.reject { color: var(--red); font-weight: 800; }
+.info { color: var(--muted); }
+.trace-log {
+  max-height: 250px;
+  overflow-y: auto;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.7;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.trace-log div { padding: 4px 8px; border-bottom: 1px solid var(--line); }
+.trace-log .ts { color: var(--quiet); margin-right: 10px; }
+.trace-log:empty::before { content: "No trace yet. Press Run."; color: var(--quiet); }
+
+@media (max-width: 1024px) {
+  .hero { grid-template-columns: 1fr; }
+  .card-canvas, .card-def, .card-test, .card-step { grid-column: span 12; }
+}
+@media (max-width: 640px) {
+  .nav { grid-template-columns: 1fr; }
+  .hero, main.grid, .nav { width: min(100% - 20px, 1440px); }
+  .title { font-size: clamp(3rem, 18vw, 5rem); }
+  .readout { grid-template-columns: 1fr; }
+  .canvas-legend { position: static; margin: 8px; width: calc(100% - 16px); }
+}
 </style>
 </head>
 <body>
-<h1>DFA String Acceptance — Step-by-Step Visualization</h1>
+<a href="#main" class="skip-link">Skip to graph</a>
 
-<div class="container">
-  <!-- Left: definition panel -->
-  <div class="panel panel-left">
-    <div class="section-title">DFA Definition</div>
-    <div class="label-row">
-    <label>Alphabet (space-separated)</label>
-    <div class="tooltip-wrap">
-        <button type="button" class="help-tip" aria-label="Show DFA transition syntax help">?</button>
-        <div class="tooltip-box" role="note">
-          <strong>Syntax:</strong> each letter is separated by a space<br>
-          <br>
-          Example: <code>a b c</code> means your alphabet is <code>{a, b, c}</code>.<br>
-          <br>
-          <code> THIS IS ONLY FOR LOGGING (DEMONSTRATION). This has no functionality :O</code>
-        </div>
+<main id="main" class="grid">
+  <section class="shell card-canvas" aria-labelledby="graph-title">
+    <div class="core">
+      <div class="canvas-head">
+        <h2 class="section-eye" id="graph-title">Automaton graph</h2>
+        <div class="chip-row" id="chip-row"></div>
       </div>
-      </div>
-    <input type="text" id="alpha-input" value="a b" />
-
-    <div class="label-row">
-      <label for="trans-input">Transitions</label>
-      <div class="tooltip-wrap">
-        <button type="button" class="help-tip" aria-label="Show DFA transition syntax help">?</button>
-        <div class="tooltip-box" role="note">
-          <strong>Syntax:</strong> one transition per line<br>
-          <code>from symbol to</code><br>
-          Example: <code>0 a 1</code> means q0 --a--> q1<br>
-          <br>
-          The number of states is dictated by the table. E.g if you have both 0 1 2 and 3 in your table then you have 4 states <code> q0 q1 q2 q3 </code>!
+      <div id="canvas-wrap">
+        <div class="canvas-meta" id="canvas-meta">ready</div>
+        <canvas id="dfa-canvas"></canvas>
+        <div class="canvas-legend" aria-label="Canvas legend">
+          <span class="ll-init"><i></i>initial</span>
+          <span class="ll-final"><i></i>final</span>
+          <span class="ll-active"><i></i>active</span>
+          <span class="ll-error"><i></i>reject</span>
         </div>
       </div>
     </div>
-    <div class="field-hint">Write each line as <code>from symbol to</code>. Example: <code>2 c 3</code></div>
-    <textarea id="trans-input" rows="8">0 a 1
+  </section>
+
+  <section class="shell card-def" aria-labelledby="definition-title">
+    <div class="core">
+      <h2 class="section-eye" id="definition-title">DFA definition</h2>
+
+      <div class="label-row">
+        <label class="field-label" for="alpha-input">Alphabet</label>
+        <div class="tooltip-wrap">
+          <button type="button" class="help-tip" aria-label="Alphabet syntax help">?</button>
+          <div class="tooltip-box" role="note"><strong>Space-separated symbols.</strong><br>Example: <code>a b c</code>. Animation consumes input one character at a time.</div>
+        </div>
+      </div>
+      <input type="text" id="alpha-input" value="a b">
+
+      <div class="label-row">
+        <label class="field-label" for="trans-input">Transitions</label>
+        <div class="tooltip-wrap">
+          <button type="button" class="help-tip" aria-label="Transition syntax help">?</button>
+          <div class="tooltip-box" role="note"><strong>One row: <code>from symbol to</code>.</strong><br>State names may be numeric or text. Examples: <code>0 a 1</code>, <code>q0 b q1</code>, <code>A x B</code>.</div>
+        </div>
+      </div>
+      <textarea id="trans-input" rows="8">0 a 1
 0 b 0
 1 a 1
 1 b 2
 2 a 1
 2 b 0</textarea>
 
-    <label>Initial State</label>
-    <input type="text" id="init-input" value="0" />
+      <label class="field-label" for="init-input">Initial state</label>
+      <input type="text" id="init-input" value="0">
 
-    <label>Final States (space-separated)</label>
-    <input type="text" id="final-input" value="2" />
+      <div class="label-row">
+        <label class="field-label" for="final-input">Final states</label>
+        <div class="tooltip-wrap">
+          <button type="button" class="help-tip" aria-label="Final states syntax help">?</button>
+          <div class="tooltip-box" role="note"><strong>Space-separated states.</strong><br>Example: <code>2 3</code> or <code>accept sink</code>.</div>
+        </div>
+      </div>
+      <input type="text" id="final-input" value="2">
 
-    <div class="btn-row">
-      <button class="btn-primary" onclick="buildDFA()">Build DFA</button>
-      <button class="btn-reset" onclick="loadExample()">Load Example</button>
+      <div class="btn-row">
+        <button class="btn btn-primary" type="button" onclick="buildDFA()">Build</button>
+        <button class="btn" type="button" onclick="loadExample()">Example</button>
+      </div>
     </div>
+  </section>
 
-    <hr style="border-color:#333; margin-bottom:10px;">
-    <div class="section-title">Test String</div>
-    <label>Input String</label>
-    <input type="text" id="string-input" value="abab" placeholder="e.g. abab" />
+  <section class="shell card-test" aria-labelledby="run-title">
+    <div class="core">
+      <h2 class="section-eye" id="run-title">Run console</h2>
+      <label class="field-label" for="test-select">Preset DFA</label>
+      <select id="test-select" onchange="loadTestCase(this.selectedIndex)"></select>
+      <div class="field-hint" id="test-desc"></div>
 
-    <div class="speed-row">
-      <label>Speed</label>
-      <input type="range" id="speed" min="100" max="1500" value="700" step="100">
-      <span id="speed-val">700ms</span>
+      <label class="field-label" for="string-input">Input string</label>
+      <input type="text" id="string-input" value="abab" placeholder="e.g. abab">
+
+      <div class="speed-row">
+        <label class="field-label" for="speed">Speed</label>
+        <input type="range" id="speed" min="100" max="1500" value="700" step="100">
+        <span id="speed-val">700ms</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-success" type="button" onclick="startAnim()">Run</button>
+        <button class="btn" type="button" onclick="stepOnce()">Step</button>
+        <button class="btn btn-danger" type="button" onclick="resetAnim()">Reset</button>
+      </div>
     </div>
+  </section>
 
-    <div class="btn-row">
-      <button class="btn-success" onclick="startAnim()">▶ Run</button>
-      <button class="btn-warning" onclick="stepOnce()">⏭ Step</button>
-      <button class="btn-reset" onclick="resetAnim()">↺ Reset</button>
-    </div>
-  </div>
-
-  <!-- Right: visualization -->
-  <div class="panel panel-main">
-    <div class="section-title">Automaton</div>
-    <div id="canvas-wrap">
-      <canvas id="dfa-canvas" width="580" height="300"></canvas>
-    </div>
-
-    <div id="step-info">
-      <div class="symbol-row" id="sym-row"></div>
+  <section class="shell card-step" aria-labelledby="step-title">
+    <div class="core">
+      <h2 class="section-eye" id="step-title">Step buffer</h2>
+      <div class="sym-row" id="sym-row"></div>
       <div id="msg" class="info">Build a DFA and enter a test string.</div>
     </div>
+  </section>
 
-    <div class="section-title" style="margin-top:10px;">Trace Log</div>
-    <div id="trace-log"></div>
-  </div>
-</div>
+  <section class="shell card-trace" aria-labelledby="trace-title">
+    <div class="core">
+      <h2 class="section-eye" id="trace-title">Trace log</h2>
+      <div class="trace-log" id="trace-log"></div>
+    </div>
+  </section>
+</main>
 
 <script>
-// ===== DFA data model =====
 let dfa = null;
-// dfa = { states: Set<int>, alpha: char[], delta: Map<"s,sym"->int>, q0: int, finals: Set<int> }
-
-// ===== Canvas =====
 const canvas = document.getElementById('dfa-canvas');
 const ctx = canvas.getContext('2d');
-
-// Layout: place states in a circle or line
-let statePos = {}; // state -> {x, y}
-let highlightState = -1;
-let highlightEdge = null; // {from, sym, to}
-let acceptedFinalState = -1;
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+let SR = 30;
+const NODE_MIN = 21;
+const NODE_MAX = 32;
+const EDGE_MARGIN = 20;
+let statePos = {};
+let highlightState = '';
+let highlightEdge = null;
+let acceptedFinalState = '';
+let rejectedState = '';
 let animTimer = null;
 let animStep = 0;
 let animString = '';
-let animPath = [];  // [{state, sym}]
+let animPath = [];
 let animRunning = false;
 
-// ===== Build DFA from inputs =====
-function buildDFA() {
-  const alphaRaw = document.getElementById('alpha-input').value.trim().split(/\s+/);
-  const transRaw = document.getElementById('trans-input').value.trim().split('\n');
-  const initRaw  = parseInt(document.getElementById('init-input').value.trim());
-  const finalRaw = document.getElementById('final-input').value.trim().split(/\s+/).map(Number);
+const TEST_CASES = [
+  { name: 'Default ends in ab', alpha: 'a b', trans: '0 a 1\n0 b 0\n1 a 1\n1 b 2\n2 a 1\n2 b 0', init: '0', finals: '2', str: 'abab', desc: 'Self-loops, bidirectional pair, and backward long edge.' },
+  { name: 'Far bidirectional q0 q2', alpha: 'a b', trans: '0 a 2\n2 a 0\n0 b 1\n1 b 2', init: '0', finals: '2', str: 'aab', desc: 'Long reverse pair across an intermediate node.' },
+  { name: 'Parallel symbols', alpha: 'a b c', trans: '0 a 1\n0 b 1\n0 c 1\n1 a 0\n1 b 0\n1 c 0', init: '0', finals: '1', str: 'ab', desc: 'Multiple symbols merge onto one directed edge label.' },
+  { name: 'All self loops', alpha: 'a', trans: '0 a 0\n1 a 1\n2 a 2\n3 a 3', init: '0', finals: '0 1 2 3', str: 'a', desc: 'Every node owns a self-loop.' },
+  { name: '5 state chain with wrap', alpha: 'a b', trans: '0 a 1\n1 a 2\n2 a 3\n3 a 4\n4 a 0\n0 b 4\n1 b 3\n3 b 1\n2 b 2', init: '0', finals: '4', str: 'aaaa', desc: 'Wrap-around, far reverse pair, and self-loop.' },
+  { name: '6 state circle layout', alpha: 'a b', trans: '0 a 1\n1 a 2\n2 a 3\n3 a 4\n4 a 5\n5 a 0\n0 b 3\n3 b 0\n2 b 5\n5 b 2', init: '0', finals: '3', str: 'aaa', desc: 'Circle layout with diametric reverse pairs.' },
+  { name: 'Single state self-loop', alpha: 'a', trans: '0 a 0', init: '0', finals: '0', str: 'aaa', desc: 'One-state DFA accepting a-star.' },
+  { name: 'Dead state rejection', alpha: 'a b', trans: '0 a 1\n1 b 2', init: '0', finals: '2', str: 'aa', desc: 'Missing transition halts in rejection.' },
+  { name: '12 state user stress', alpha: 'a b', trans: 'q0 a q1\nq1 a q0\nq0 b q6\nq6 b q0\nq1 b q2\nq2 a q3\nq3 b q4\nq4 a q5\nq5 b q6\nq6 a q7\nq7 b q8\nq8 a q9\nq9 b q10\nq10 a q11\nq11 b q0\nq3 a q3\nq7 a q7\nq11 a q11', init: 'q0', finals: 'q3 q7 q11', str: 'ababa', desc: 'User-style names, dense long edges, reverse pairs, and self-loops.' }
+];
 
+function cleanToken(value) { return String(value || '').trim(); }
+function keyOf(from, sym) { return `${from}|${sym}`; }
+function edgeId(from, to) { return `${from}|${to}`; }
+function stateLabel(s) { return /^-?\d+$/.test(s) ? 'q' + s : s; }
+function sortStates(a, b) {
+  const an = /^-?\d+$/.test(a), bn = /^-?\d+$/.test(b);
+  if (an && bn) return Number(a) - Number(b);
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function dist(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
+function unit(a, b) {
+  const d = dist(a, b) || 1;
+  return { x: (b.x - a.x) / d, y: (b.y - a.y) / d, d };
+}
+function normalFromUnit(u) { return { x: -u.y, y: u.x }; }
+function clampPoint(p, margin = EDGE_MARGIN) {
+  const w = canvas.width / DPR;
+  const h = canvas.height / DPR;
+  return { x: clamp(p.x, margin, w - margin), y: clamp(p.y, margin, h - margin) };
+}
+function pointOnQuadratic(a, c, b, t) {
+  const mt = 1 - t;
+  return { x: mt * mt * a.x + 2 * mt * t * c.x + t * t * b.x, y: mt * mt * a.y + 2 * mt * t * c.y + t * t * b.y };
+}
+function linePointDistance(p, a, b) {
+  const ab = unit(a, b);
+  const apx = p.x - a.x;
+  const apy = p.y - a.y;
+  const t = clamp(apx * ab.x + apy * ab.y, 0, ab.d);
+  const x = a.x + ab.x * t;
+  const y = a.y + ab.y * t;
+  return Math.hypot(p.x - x, p.y - y);
+}
+
+function resizeCanvas() {
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth || 580;
+  const h = Math.max(380, Math.round(w * 0.56));
+  canvas.style.height = h + 'px';
+  canvas.width = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (dfa) drawDFA();
+}
+
+function buildDFA() {
+  const alpha = document.getElementById('alpha-input').value.trim().split(/\s+/).filter(Boolean);
+  const rows = document.getElementById('trans-input').value.split(/\r?\n/);
+  const start = cleanToken(document.getElementById('init-input').value);
+  const finalTokens = document.getElementById('final-input').value.trim().split(/\s+/).filter(Boolean).map(cleanToken);
   const states = new Set();
   const delta = {};
-  const finals = new Set(finalRaw);
+  const finals = new Set(finalTokens);
 
-  states.add(initRaw);
-  finalRaw.forEach(f => states.add(f));
+  if (start) states.add(start);
+  for (const f of finalTokens) states.add(f);
 
-  for (const line of transRaw) {
-    const parts = line.trim().split(/\s+/);
+  for (const row of rows) {
+    const parts = row.trim().split(/\s+/);
     if (parts.length < 3) continue;
-    const from = parseInt(parts[0]);
-    const sym  = parts[1];
-    const to   = parseInt(parts[2]);
-    states.add(from); states.add(to);
-    delta[`${from},${sym}`] = to;
+    const from = cleanToken(parts[0]);
+    const sym = cleanToken(parts[1]);
+    const to = cleanToken(parts.slice(2).join(' '));
+    if (!from || !sym || !to) continue;
+    states.add(from);
+    states.add(to);
+    delta[keyOf(from, sym)] = to;
   }
 
-  dfa = { states: Array.from(states).sort((a,b)=>a-b), alpha: alphaRaw, delta, q0: initRaw, finals };
-
-  layoutStates();
-  resetAnim();
+  dfa = { states: [...states].sort(sortStates), alpha, delta, q0: start, finals };
+  resetAnim(false);
   drawDFA();
-  log('DFA built: ' + dfa.states.length + ' states, alphabet {' + alphaRaw.join(',') + '}');
+  updateChips();
+  setCanvasMeta(`${stateLabel(dfa.q0)} / ready`);
+  log(`build / ${dfa.states.length} states / sigma {${alpha.join(', ') || '-'}}`);
 }
 
-function layoutStates() {
-  const n = dfa.states.length;
-  const cx = canvas.width / 2, cy = canvas.height / 2 - 10;
-  const r = Math.min(cx, cy) - 60;
-  statePos = {};
-  if (n === 1) {
-    statePos[dfa.states[0]] = {x: cx, y: cy};
-  } else if (n <= 5) {
-    // Arrange in a row
-    const gap = (canvas.width - 120) / (n - 1);
-    dfa.states.forEach((s, i) => {
-      statePos[s] = {x: 60 + i * gap, y: cy};
-    });
-  } else {
-    dfa.states.forEach((s, i) => {
-      const angle = (2 * Math.PI * i / n) - Math.PI / 2;
-      statePos[s] = {
-        x: cx + r * Math.cos(angle),
-        y: cy + r * Math.sin(angle)
-      };
-    });
+function layoutStates(states) {
+  const w = canvas.width / DPR;
+  const h = canvas.height / DPR;
+  const count = states.length;
+  const positions = {};
+  SR = clamp(Math.floor(Math.min(w, h) / (count > 10 ? 18 : count > 6 ? 15 : 12)), NODE_MIN, NODE_MAX);
+  if (!count) return positions;
+  if (count === 1) {
+    positions[states[0]] = { x: w / 2, y: h / 2 };
+    return positions;
   }
+  if (count === 2) {
+    states.forEach((state, i) => { positions[state] = { x: w * (0.33 + i * 0.34), y: h / 2 }; });
+    return positions;
+  }
+  if (count === 3 || count === 4) {
+    const cx = w / 2, cy = h / 2;
+    const rx = Math.max(120, w * 0.34), ry = Math.max(86, h * 0.28);
+    const start = count === 3 ? -Math.PI / 2 : -Math.PI * 0.75;
+    states.forEach((state, i) => {
+      const a = start + (Math.PI * 2 * i) / count;
+      positions[state] = { x: clamp(cx + Math.cos(a) * rx, SR + 54, w - SR - 54), y: clamp(cy + Math.sin(a) * ry, SR + 54, h - SR - 54) };
+    });
+    return positions;
+  }
+  const cx = w / 2, cy = h / 2;
+  const rx = Math.max(120, w / 2 - SR - 76), ry = Math.max(108, h / 2 - SR - 72);
+  states.forEach((state, i) => {
+    const a = -Math.PI / 2 + (Math.PI * 2 * i) / count;
+    positions[state] = { x: clamp(cx + Math.cos(a) * rx, SR + 48, w - SR - 48), y: clamp(cy + Math.sin(a) * ry, SR + 48, h - SR - 48) };
+  });
+  return positions;
 }
 
-// ===== Drawing =====
-const SR = 30; // state radius
+function buildEdges() {
+  const map = new Map();
+  if (!dfa || !dfa.delta) return [];
+  for (const [key, to] of Object.entries(dfa.delta)) {
+    const split = key.indexOf('|');
+    if (split < 0) continue;
+    const from = key.slice(0, split);
+    const sym = key.slice(split + 1);
+    if (!from || !sym || !to) continue;
+    if (!dfa.states.includes(from) || !dfa.states.includes(to)) continue;
+    const id = edgeId(from, to);
+    if (!map.has(id)) map.set(id, { from, to, symbols: [] });
+    map.get(id).symbols.push(sym);
+  }
+  return [...map.values()].map(edge => ({ ...edge, label: edge.symbols.sort().join(',') }));
+}
+function hasReverse(edge, ids) { return edge.from !== edge.to && ids.has(edgeId(edge.to, edge.from)); }
+function hasIntermediateNode(p1, p2, positions, from, to) {
+  return Object.entries(positions).some(([state, p]) => state !== from && state !== to && linePointDistance(p, p1, p2) < SR * 2.15);
+}
+function routeEdges(edges, positions) {
+  const ids = new Set(edges.map(edge => edgeId(edge.from, edge.to)));
+  return edges.map(edge => {
+    const p1 = positions[edge.from];
+    const p2 = positions[edge.to];
+    if (!p1 || !p2) return null;
+    if (edge.from === edge.to) return routeSelfLoop(edge, p1, positions);
 
-function drawArrow(x1, y1, x2, y2, label, color, curved, selfLoop, fromState, toState) {
+    const u = unit(p1, p2);
+    const n = normalFromUnit(u);
+    const reverse = hasReverse(edge, ids);
+    const blocked = hasIntermediateNode(p1, p2, positions, edge.from, edge.to);
+    const longEdge = u.d > SR * 5;
+
+    if (!reverse && !blocked && !longEdge) {
+      const start = { x: p1.x + u.x * SR, y: p1.y + u.y * SR };
+      const end = { x: p2.x - u.x * SR, y: p2.y - u.y * SR };
+      return { ...edge, kind: 'straight', start, end, labelPoint: clampPoint({ x: (start.x + end.x) / 2 + n.x * 20, y: (start.y + end.y) / 2 + n.y * 20 }, 28), angle: Math.atan2(u.y, u.x) };
+    }
+
+    const id = edgeId(edge.from, edge.to);
+    const reverseId = edgeId(edge.to, edge.from);
+    const sign = id < reverseId ? 1 : -1;
+    const lift = clamp(u.d * (reverse ? 0.30 : 0.22), 46, 178) * sign;
+    const cp = clampPoint({ x: (p1.x + p2.x) / 2 + n.x * lift, y: (p1.y + p2.y) / 2 + n.y * lift }, 34);
+    const t = clamp(SR / u.d, 0.05, 0.34);
+    const start = pointOnQuadratic(p1, cp, p2, t);
+    const end = pointOnQuadratic(p1, cp, p2, 1 - t);
+    const labelPoint = clampPoint(pointOnQuadratic(p1, cp, p2, 0.5), 34);
+    const tangent = { x: p2.x - cp.x, y: p2.y - cp.y };
+    return { ...edge, kind: 'curve', start, end, cp, labelPoint, angle: Math.atan2(tangent.y, tangent.x) };
+  }).filter(Boolean);
+}
+function routeSelfLoop(edge, p, positions) {
+  const w = canvas.width / DPR, h = canvas.height / DPR;
+  const cx = w / 2, cy = h / 2;
+  let theta = Math.atan2(p.y - cy, p.x - cx);
+  if (!Number.isFinite(theta) || Math.hypot(p.x - cx, p.y - cy) < 4) theta = -Math.PI / 2;
+  const candidates = [theta, -Math.PI / 2, 0, Math.PI, Math.PI / 2];
+  let best = candidates[0], bestScore = -Infinity;
+  for (const a of candidates) {
+    const probe = { x: p.x + Math.cos(a) * SR * 3.2, y: p.y + Math.sin(a) * SR * 3.2 };
+    const edgeScore = Math.min(probe.x, probe.y, w - probe.x, h - probe.y);
+    const neighborDistances = Object.values(positions).filter(q => q !== p).map(q => dist(probe, q));
+    const neighborScore = neighborDistances.length ? Math.min(...neighborDistances) : 999;
+    const score = edgeScore + neighborScore;
+    if (score > bestScore) { bestScore = score; best = a; }
+  }
+  const spread = Math.PI / 5;
+  const start = { x: p.x + Math.cos(best - spread) * SR, y: p.y + Math.sin(best - spread) * SR };
+  const end = { x: p.x + Math.cos(best + spread) * SR, y: p.y + Math.sin(best + spread) * SR };
+  const c1 = { x: p.x + Math.cos(best - 0.72) * SR * 3.1, y: p.y + Math.sin(best - 0.72) * SR * 3.1 };
+  const c2 = { x: p.x + Math.cos(best + 0.72) * SR * 3.1, y: p.y + Math.sin(best + 0.72) * SR * 3.1 };
+  const labelPoint = clampPoint({ x: p.x + Math.cos(best) * SR * 2.85, y: p.y + Math.sin(best) * SR * 2.85 }, 34);
+  const tangent = { x: end.x - c2.x, y: end.y - c2.y };
+  return { ...edge, kind: 'self', start, end, c1, c2, labelPoint, angle: Math.atan2(tangent.y, tangent.x) };
+}
+
+function drawCanvasGrid() {
+  const w = canvas.width / DPR, h = canvas.height / DPR;
   ctx.save();
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 2;
-
-  if (selfLoop) {
-    // Draw a loop above/below the state
-    const lx = x1, ly = y1 - SR;
-    const loopR = 22;
-    ctx.beginPath();
-    ctx.arc(lx, ly - loopR, loopR, Math.PI * 0.1, Math.PI * 0.9);
-    ctx.stroke();
-    // Arrowhead
-    const ax = lx + loopR * Math.cos(Math.PI * 0.9);
-    const ay = ly - loopR + loopR * Math.sin(Math.PI * 0.9);
-    drawHead(ax, ay, Math.PI * 1.6, color);
-    // Label
-    ctx.fillStyle = color;
-    ctx.font = '13px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(label, lx, ly - loopR * 2 - 4);
-    ctx.restore(); return;
-  }
-
-  const dx = x2 - x1, dy = y2 - y1;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const ux = dx / dist, uy = dy / dist;
-  const sx = x1 + ux * SR, sy = y1 + uy * SR;
-  const ex = x2 - ux * SR, ey = y2 - uy * SR;
-
-  if (curved) {
-    const mid = {x: (sx + ex) / 2 - uy * 40, y: (sy + ey) / 2 + ux * 40};
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.quadraticCurveTo(mid.x, mid.y, ex, ey);
-    ctx.stroke();
-    // Label at midpoint of curve
-    ctx.fillStyle = color;
-    ctx.font = '13px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(label, (sx + ex) / 2 - uy * 48, (sy + ey) / 2 + ux * 48);
-    // Arrow head direction
-    const t = 0.95;
-    const hx = (1-t)*(1-t)*sx + 2*(1-t)*t*mid.x + t*t*ex;
-    const hy = (1-t)*(1-t)*sy + 2*(1-t)*t*mid.y + t*t*ey;
-    const angle = Math.atan2(ey - hy, ex - hx);
-    drawHead(ex, ey, angle, color);
-  } else {
-    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
-    const angle = Math.atan2(dy, dx);
-    drawHead(ex, ey, angle, color);
-    // Label
-    ctx.fillStyle = color;
-    ctx.font = '13px monospace';
-    ctx.textAlign = 'center';
-    const lx = (sx + ex) / 2 - uy * 12;
-    const ly = (sy + ey) / 2 + ux * 12;
-    ctx.fillText(label, lx, ly);
-  }
+  ctx.fillStyle = '#050505';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(234,234,234,0.055)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y <= h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(230,25,25,0.22)';
+  ctx.strokeRect(16, 16, Math.max(0, w - 32), Math.max(0, h - 32));
   ctx.restore();
 }
-
 function drawHead(x, y, angle, color) {
-  const size = 10;
   ctx.save();
-  ctx.fillStyle = color;
   ctx.translate(x, y);
   ctx.rotate(angle);
   ctx.beginPath();
   ctx.moveTo(0, 0);
-  ctx.lineTo(-size, -size / 2);
-  ctx.lineTo(-size, size / 2);
+  ctx.lineTo(-13, -6);
+  ctx.lineTo(-9, 0);
+  ctx.lineTo(-13, 6);
   ctx.closePath();
+  ctx.fillStyle = color;
   ctx.fill();
   ctx.restore();
 }
-
-function drawDFA() {
-  if (!dfa) { ctx.clearRect(0,0,canvas.width,canvas.height); return; }
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Group edges by (from, to) pair for curved multi-edge detection
-  const edgeMap = {}; // "from-to" -> [{sym, to}]
-  for (const key in dfa.delta) {
-    const [from, sym] = key.split(',');
-    const to = dfa.delta[key];
-    const k = from + '-' + to;
-    const kr = to + '-' + from;
-    if (!edgeMap[k]) edgeMap[k] = [];
-    edgeMap[k].push({from: parseInt(from), sym, to});
+function drawLabel(x, y, text, color) {
+  ctx.save();
+  ctx.font = '700 12px JetBrains Mono, IBM Plex Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#0a0a0a';
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+function drawRoutedEdge(edge, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = color === '#4af626' ? 3 : 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (edge.kind === 'straight') {
+    ctx.moveTo(edge.start.x, edge.start.y);
+    ctx.lineTo(edge.end.x, edge.end.y);
+  } else if (edge.kind === 'curve') {
+    ctx.moveTo(edge.start.x, edge.start.y);
+    ctx.quadraticCurveTo(edge.cp.x, edge.cp.y, edge.end.x, edge.end.y);
+  } else {
+    ctx.moveTo(edge.start.x, edge.start.y);
+    ctx.bezierCurveTo(edge.c1.x, edge.c1.y, edge.c2.x, edge.c2.y, edge.end.x, edge.end.y);
   }
+  ctx.stroke();
+  drawHead(edge.end.x, edge.end.y, edge.angle, color);
+  drawLabel(edge.labelPoint.x, edge.labelPoint.y, edge.label, color);
+  ctx.restore();
+}
+function drawState(s, p) {
+  if (!p) return;
+  const isFinal = dfa.finals.has(s);
+  const isStart = s === dfa.q0;
+  const isCurrent = highlightState === s && !acceptedFinalState && !rejectedState;
+  const isAccepted = acceptedFinalState === s;
+  const isRejected = rejectedState === s;
+  let stroke = '#eaeaea';
+  if (isCurrent || isAccepted) stroke = '#4af626';
+  if (isRejected) stroke = '#e61919';
 
-  // Draw edges
-  const drawn = new Set();
-  for (const key in dfa.delta) {
-    const [fromS, sym] = key.split(',');
-    const from = parseInt(fromS);
-    const to = dfa.delta[key];
-    const pairKey = from + '-' + to;
-    const revKey = to + '-' + from;
-    if (drawn.has(pairKey)) continue;
-    drawn.add(pairKey);
-
-    const p1 = statePos[from], p2 = statePos[to];
-    if (!p1 || !p2) continue;
-
-    // Collect label (all symbols on this edge)
-    const syms = (edgeMap[pairKey] || []).map(e => e.sym).join(',');
-    const selfLoop = from === to;
-    const hasBoth = edgeMap[pairKey] && edgeMap[revKey];
-    const curved = hasBoth && !selfLoop;
-
-    // Check if this edge is highlighted
-    let color = '#8899aa';
-    if (highlightEdge) {
-      if (highlightEdge.from === from && edgeMap[pairKey] &&
-          edgeMap[pairKey].some(e => e.sym === highlightEdge.sym)) {
-        color = '#f4a261';
-      }
-    }
-
-    drawArrow(p1.x, p1.y, p2.x, p2.y, syms, color, curved, selfLoop, from, to);
-  }
-
-  // Draw states
-  for (const s of dfa.states) {
-    const p = statePos[s];
-    if (!p) continue;
-
-    const isAcceptedFinal = s === acceptedFinalState;
-    const isHighlight = s === highlightState && !isAcceptedFinal;
-    const isFinal = dfa.finals.has(s);
-    const isInit = s === dfa.q0;
-
-    // Glow for highlighted
-    if (isHighlight) {
-      ctx.save();
-      ctx.shadowColor = '#4cc9f0';
-      ctx.shadowBlur = 20;
-      ctx.strokeStyle = '#4cc9f0'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(p.x, p.y, SR, 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
-    }
-    if (isAcceptedFinal) {
-      ctx.save();
-      ctx.shadowColor = '#80ed99';
-      ctx.shadowBlur = 26;
-      ctx.strokeStyle = '#80ed99';
-      ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.arc(p.x, p.y, SR + 1, 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
-    }
-
-    // Fill
-    ctx.beginPath(); ctx.arc(p.x, p.y, SR, 0, Math.PI * 2);
-    ctx.fillStyle = isAcceptedFinal ? '#163a27' : (isHighlight ? '#1a3a5c' : '#1a2a3c');
-    ctx.fill();
-    ctx.strokeStyle = isAcceptedFinal ? '#80ed99' : (isHighlight ? '#4cc9f0' : (isFinal ? '#80ed99' : '#556677'));
-    ctx.lineWidth = isAcceptedFinal ? 3.5 : (isHighlight ? 3 : 2);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, SR, 0, Math.PI * 2);
+  ctx.fillStyle = '#111111';
+  ctx.fill();
+  ctx.lineWidth = isCurrent || isAccepted || isRejected ? 4 : 2;
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+  if (isFinal) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, SR - 6, 0, Math.PI * 2);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = stroke;
     ctx.stroke();
-
-    // Final state: double circle
-    if (isFinal) {
-      ctx.beginPath(); ctx.arc(p.x, p.y, SR - 5, 0, Math.PI * 2);
-      ctx.strokeStyle = isAcceptedFinal ? '#9dffb3' : (isHighlight ? '#4cc9f0' : '#80ed99');
-      ctx.lineWidth = 1.5; ctx.stroke();
-    }
-
-    // State label
-    ctx.fillStyle = isAcceptedFinal ? '#d7ffe2' : (isHighlight ? '#4cc9f0' : '#ddd');
-    ctx.font = `bold 14px monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('q' + s, p.x, p.y);
-
-    // Initial arrow
-    if (isInit) {
-      ctx.save();
-      ctx.strokeStyle = '#a0c4ff'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(p.x - SR - 30, p.y); ctx.lineTo(p.x - SR - 2, p.y); ctx.stroke();
-      drawHead(p.x - SR - 2, p.y, 0, '#a0c4ff');
-      ctx.restore();
-    }
   }
-}
-
-// ===== Animation =====
-function startAnim() {
-  if (!dfa) { buildDFA(); }
-  const w = document.getElementById('string-input').value.trim();
-  if (animRunning) return;
-  resetAnim();
-  animString = w;
-  buildTrace(w);
-  renderSymRow();
-  animRunning = true;
-  scheduleNext();
-}
-
-function buildTrace(w) {
-  animPath = [{state: dfa.q0, sym: null}];
-  let cur = dfa.q0;
-  for (const c of w) {
-    const key = `${cur},${c}`;
-    const nxt = dfa.delta[key];
-    if (nxt === undefined) {
-      animPath.push({state: -1, sym: c, from: cur});
-      break;
-    }
-    animPath.push({state: nxt, sym: c, from: cur});
-    cur = nxt;
+  if (isStart) {
+    ctx.beginPath();
+    ctx.moveTo(p.x - SR - 28, p.y);
+    ctx.lineTo(p.x - SR - 6, p.y);
+    ctx.strokeStyle = '#e61919';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawHead(p.x - SR - 6, p.y, 0, '#e61919');
   }
+  ctx.font = '800 12px JetBrains Mono, IBM Plex Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#111111';
+  ctx.strokeText(stateLabel(s), p.x, p.y);
+  ctx.fillStyle = '#eaeaea';
+  ctx.fillText(stateLabel(s), p.x, p.y);
+  ctx.restore();
 }
-
-function scheduleNext() {
-  if (!animRunning) return;
-  const speed = parseInt(document.getElementById('speed').value);
-  animTimer = setTimeout(() => doStep(), speed);
-}
-
-function doStep() {
-  if (animStep >= animPath.length) { finishAnim(); return; }
-  const entry = animPath[animStep];
-
-  highlightState = entry.state;
-  if (entry.sym) highlightEdge = {from: entry.from, sym: entry.sym, to: entry.state};
-  else highlightEdge = null;
-
-  renderSymRow();
-  drawDFA();
-
-  const msgEl = document.getElementById('msg');
-  if (animStep === 0) {
-    msgEl.innerHTML = `<span class="info">Start in state q${entry.state}</span>`;
-    log(`Initial state: q${entry.state}`);
-  } else if (entry.state === -1) {
-    msgEl.innerHTML = `<span class="reject">Dead state on symbol '${entry.sym}' — REJECTED</span>`;
-    log(`Read '${entry.sym}' from q${entry.from} → DEAD STATE → REJECTED`);
-    animRunning = false;
-    return;
-  } else {
-    msgEl.innerHTML = `<span class="info">Read '${entry.sym}': q${entry.from} → q${entry.state}</span>`;
-    log(`Read '${entry.sym}': q${entry.from} → q${entry.state}`);
+function drawDFA() {
+  ctx.clearRect(0, 0, canvas.width / DPR, canvas.height / DPR);
+  drawCanvasGrid();
+  if (!dfa || !Array.isArray(dfa.states) || !dfa.delta) return;
+  statePos = layoutStates(dfa.states);
+  const routedEdges = routeEdges(buildEdges(), statePos);
+  for (const edge of routedEdges) {
+    let color = 'rgba(234,234,234,0.62)';
+    if (highlightEdge && edge.from === highlightEdge.from && edge.to === highlightEdge.to && edge.symbols.includes(highlightEdge.sym)) color = '#4af626';
+    drawRoutedEdge(edge, color);
   }
-
-  animStep++;
-  if (animStep < animPath.length || (animStep === animPath.length && animPath.length > 1)) {
-    if (animStep >= animPath.length) { finishAnim(); return; }
-    scheduleNext();
-  } else {
-    scheduleNext();
-  }
+  for (const state of dfa.states) drawState(state, statePos[state]);
 }
 
-function finishAnim() {
-  animRunning = false;
-  const last = animPath[animPath.length - 1];
-  const msgEl = document.getElementById('msg');
-  if (last.state === -1) return; // already handled
-  acceptedFinalState = -1;
-  const accepted = dfa.finals.has(last.state);
-  if (accepted) {
-    acceptedFinalState = last.state;
-    highlightState = -1;
-    highlightEdge = null;
-    drawDFA();
-    msgEl.innerHTML = `<span class="accept">✓ ACCEPTED — ended in final state q${last.state}</span>`;
-    log('=> ACCEPTED');
-  } else {
-    drawDFA();
-    msgEl.innerHTML = `<span class="reject">✗ REJECTED — ended in non-final state q${last.state}</span>`;
-    log('=> REJECTED');
-  }
+function updateChips() {
+  const row = document.getElementById('chip-row');
+  if (!dfa) { row.innerHTML = ''; return; }
+  const finals = [...dfa.finals].sort(sortStates).map(stateLabel).join(', ') || '-';
+  row.innerHTML = `<span class="chip"><strong>${dfa.states.length}</strong> states</span><span class="chip">sigma <strong>{${dfa.alpha.join(', ') || '-'}}</strong></span><span class="chip">init <strong>${stateLabel(dfa.q0)}</strong></span><span class="chip">final <strong>${finals}</strong></span>`;
 }
-
-function stepOnce() {
-  if (!dfa) buildDFA();
-  if (animStep === 0 && !animRunning) {
-    animString = document.getElementById('string-input').value.trim();
-    buildTrace(animString);
-    renderSymRow();
-    animRunning = true;
-  }
-  clearTimeout(animTimer);
-  if (animStep >= animPath.length) { finishAnim(); animRunning = false; return; }
-  doStepManual();
+function setCanvasMeta(text, live = false) {
+  const el = document.getElementById('canvas-meta');
+  el.textContent = text;
+  el.classList.toggle('live', live);
 }
-
-function doStepManual() {
-  if (animStep >= animPath.length) { finishAnim(); animRunning = false; return; }
-  const entry = animPath[animStep];
-  highlightState = entry.state;
-  if (entry.sym) highlightEdge = {from: entry.from, sym: entry.sym, to: entry.state};
-  else highlightEdge = null;
-  renderSymRow();
-  drawDFA();
-
-  const msgEl = document.getElementById('msg');
-  if (animStep === 0) {
-    msgEl.innerHTML = `<span class="info">Start in state q${entry.state}</span>`;
-    log(`Initial state: q${entry.state}`);
-  } else if (entry.state === -1) {
-    msgEl.innerHTML = `<span class="reject">Dead state on '${entry.sym}' — REJECTED</span>`;
-    log(`Read '${entry.sym}' from q${entry.from} → DEAD → REJECTED`);
-    animRunning = false; animStep++; return;
-  } else {
-    msgEl.innerHTML = `<span class="info">Read '${entry.sym}': q${entry.from} → q${entry.state}</span>`;
-    log(`Read '${entry.sym}': q${entry.from} → q${entry.state}`);
-  }
-
-  animStep++;
-  if (animStep >= animPath.length) { finishAnim(); animRunning = false; }
-}
-
-function resetAnim() {
-  clearTimeout(animTimer);
-  animRunning = false;
-  animStep = 0;
-  animPath = [];
-  animString = '';
-  acceptedFinalState = -1;
-  highlightState = dfa ? dfa.q0 : -1;
-  highlightEdge = null;
-  document.getElementById('sym-row').innerHTML = '';
-  document.getElementById('msg').innerHTML = '<span class="info">Enter a string and press Run or Step.</span>';
-  drawDFA();
-}
-
 function renderSymRow() {
   const row = document.getElementById('sym-row');
   row.innerHTML = '';
+  if (animString.length === 0) {
+    const cell = document.createElement('div');
+    cell.className = 'sym-cell info';
+    cell.textContent = 'lambda';
+    row.appendChild(cell);
+    return;
+  }
   for (let i = 0; i < animString.length; i++) {
     const cell = document.createElement('div');
     cell.className = 'sym-cell';
     cell.textContent = animString[i];
-    // animStep 0 = initial state (no sym consumed yet)
-    // animStep k means k-1 symbols consumed
     if (i < animStep - 1) cell.classList.add('done');
     else if (i === animStep - 1) cell.classList.add('current');
     else cell.classList.add('pending');
     row.appendChild(cell);
   }
-  if (animString.length === 0) {
-    const cell = document.createElement('div');
-    cell.className = 'sym-cell info';
-    cell.textContent = 'λ';
-    row.appendChild(cell);
-  }
 }
-
-// ===== Trace log =====
 function log(msg) {
   const div = document.getElementById('trace-log');
+  const ts = new Date().toTimeString().slice(0, 8);
   const entry = document.createElement('div');
-  entry.textContent = '> ' + msg;
+  entry.innerHTML = `<span class="ts">${ts}</span>${msg}`;
   div.appendChild(entry);
   div.scrollTop = div.scrollHeight;
 }
 
-// ===== Speed label =====
-document.getElementById('speed').addEventListener('input', function() {
-  document.getElementById('speed-val').textContent = this.value + 'ms';
-});
-
-// ===== Example =====
-function loadExample() {
-  document.getElementById('alpha-input').value = 'a b';
-  document.getElementById('trans-input').value =
-    '0 a 1\n0 b 0\n1 a 1\n1 b 2\n2 a 1\n2 b 0';
-  document.getElementById('init-input').value = '0';
-  document.getElementById('final-input').value = '2';
-  document.getElementById('string-input').value = 'abab';
-  buildDFA();
-  document.getElementById('msg').innerHTML =
-    '<span class="info">Loaded: DFA accepting strings ending in "ab". Press Run.</span>';
+function buildTrace(w) {
+  animPath = [{ state: dfa.q0, sym: null, from: null }];
+  let cur = dfa.q0;
+  for (const c of w) {
+    const nxt = dfa.delta[keyOf(cur, c)];
+    if (nxt === undefined) { animPath.push({ state: '', sym: c, from: cur, dead: true }); break; }
+    animPath.push({ state: nxt, sym: c, from: cur, dead: false });
+    cur = nxt;
+  }
+}
+function startAnim() {
+  if (!dfa) buildDFA();
+  if (animRunning) return;
+  resetAnim(false);
+  animString = document.getElementById('string-input').value.trim();
+  buildTrace(animString);
+  renderSymRow();
+  animRunning = true;
+  scheduleNext();
+}
+function scheduleNext() {
+  if (!animRunning) return;
+  animTimer = setTimeout(doStep, Number(document.getElementById('speed').value));
+}
+function applyStep(entry) {
+  if (entry.dead) {
+    highlightState = entry.from;
+    rejectedState = entry.from;
+    highlightEdge = null;
+    document.getElementById('msg').innerHTML = `<span class="reject">Dead state on '${entry.sym}' from ${stateLabel(entry.from)}. Rejected.</span>`;
+    log(`read '${entry.sym}' / ${stateLabel(entry.from)} -> dead / rejected`);
+    setCanvasMeta(`${stateLabel(entry.from)} / dead on '${entry.sym}'`);
+    drawDFA();
+    return false;
+  }
+  highlightState = entry.state;
+  rejectedState = '';
+  highlightEdge = entry.sym ? { from: entry.from, sym: entry.sym, to: entry.state } : null;
+  if (entry.sym === null) {
+    document.getElementById('msg').innerHTML = `<span class="info">Start in <strong>${stateLabel(entry.state)}</strong>.</span>`;
+    log(`init / ${stateLabel(entry.state)}`);
+    setCanvasMeta(`${stateLabel(entry.state)} / start`, true);
+  } else {
+    document.getElementById('msg').innerHTML = `<span class="info">Read '${entry.sym}': ${stateLabel(entry.from)} -> <strong>${stateLabel(entry.state)}</strong>.</span>`;
+    log(`read '${entry.sym}' / ${stateLabel(entry.from)} -> ${stateLabel(entry.state)}`);
+    setCanvasMeta(`${stateLabel(entry.from)} -> ${stateLabel(entry.state)} / '${entry.sym}'`, true);
+  }
+  drawDFA();
+  return true;
+}
+function doStep(auto = true) {
+  if (animStep >= animPath.length) { finishAnim(); return; }
+  const ok = applyStep(animPath[animStep]);
+  renderSymRow();
+  animStep++;
+  if (!ok) { animRunning = false; return; }
+  if (animStep >= animPath.length) { finishAnim(); return; }
+  if (auto) scheduleNext();
+}
+function stepOnce() {
+  if (!dfa) buildDFA();
+  if (animStep === 0 && !animRunning) {
+    animString = document.getElementById('string-input').value.trim();
+    buildTrace(animString);
+  }
+  clearTimeout(animTimer);
+  animRunning = false;
+  if (animStep >= animPath.length) { finishAnim(); return; }
+  doStep(false);
+}
+function finishAnim() {
+  animRunning = false;
+  const last = animPath[animPath.length - 1];
+  if (!last || last.dead) return;
+  acceptedFinalState = '';
+  highlightEdge = null;
+  const accepted = dfa.finals.has(last.state);
+  if (accepted) {
+    acceptedFinalState = last.state;
+    highlightState = '';
+    document.getElementById('msg').innerHTML = `<span class="accept">Accepted. Ended in final state ${stateLabel(last.state)}.</span>`;
+    log(`accepted / ${stateLabel(last.state)}`);
+    setCanvasMeta(`${stateLabel(last.state)} / accepted`, true);
+  } else {
+    highlightState = last.state;
+    rejectedState = last.state;
+    document.getElementById('msg').innerHTML = `<span class="reject">Rejected. Ended in non-final state ${stateLabel(last.state)}.</span>`;
+    log(`rejected / ${stateLabel(last.state)}`);
+    setCanvasMeta(`${stateLabel(last.state)} / rejected`);
+  }
+  drawDFA();
+}
+function resetAnim(redraw = true) {
+  clearTimeout(animTimer);
+  animRunning = false;
+  animStep = 0;
+  animPath = [];
+  animString = '';
+  acceptedFinalState = '';
+  rejectedState = '';
+  highlightState = dfa ? dfa.q0 : '';
+  highlightEdge = null;
+  document.getElementById('sym-row').innerHTML = '';
+  document.getElementById('msg').innerHTML = '<span class="info">Enter a string and press Run or Step.</span>';
+  if (dfa) setCanvasMeta(`${stateLabel(dfa.q0)} / ready`);
+  if (redraw) drawDFA();
 }
 
-// ===== Init =====
-loadExample();
+function loadTestCase(i) {
+  const tc = TEST_CASES[i];
+  if (!tc) return;
+  document.getElementById('alpha-input').value = tc.alpha;
+  document.getElementById('trans-input').value = tc.trans;
+  document.getElementById('init-input').value = tc.init;
+  document.getElementById('final-input').value = tc.finals;
+  document.getElementById('string-input').value = tc.str;
+  document.getElementById('test-desc').textContent = tc.desc;
+  const sel = document.getElementById('test-select');
+  if (sel.selectedIndex !== i) sel.selectedIndex = i;
+  buildDFA();
+  document.getElementById('msg').innerHTML = `<span class="info">Loaded: <strong>${tc.name}</strong>. Press Run.</span>`;
+}
+function initTestSelector() {
+  const sel = document.getElementById('test-select');
+  sel.innerHTML = '';
+  TEST_CASES.forEach((tc, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = tc.name;
+    sel.appendChild(opt);
+  });
+}
+function loadExample() { loadTestCase(0); }
+
+document.getElementById('speed').addEventListener('input', function () {
+  document.getElementById('speed-val').textContent = this.value + 'ms';
+});
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+initTestSelector();
+loadTestCase(0);
 </script>
 </body>
 </html>

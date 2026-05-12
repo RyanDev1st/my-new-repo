@@ -1,0 +1,12 @@
+alphabet a
+transitions 2
+0 a 1
+1 a 0
+initial 0
+finals 0
+strings 5
+""
+a
+aa
+aaa
+aaaa

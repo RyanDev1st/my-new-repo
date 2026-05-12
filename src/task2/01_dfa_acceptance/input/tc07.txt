@@ -1,16 +1,17 @@
-2 2
-a b
-4
-q0 a q1
-q0 b q1
-q1 a q0
-q1 b q0
-q0
-1
-q0
-5
-
-ab
-a
-aabb
-b
+alphabet 0 1
+transitions 6
+0 0 0
+0 1 1
+1 0 2
+1 1 0
+2 0 1
+2 1 2
+initial 0
+finals 0
+strings 6
+""
+0
+11
+110
+1001
+1010

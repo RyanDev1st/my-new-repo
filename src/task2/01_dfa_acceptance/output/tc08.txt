@@ -1,25 +1,25 @@
 === tc08.txt ===
-DFA: 3 states, alphabet = {a,b}
-Initial: q0  Final: {q0,q1}
-
-Input: aba
-  Steps: q0 --a--> q0 --b--> q1 --a--> q0
-  Result: ACCEPTED
-
-Input: abb
-  Steps: q0 --a--> q0 --b--> q1 --b--> q2
-  Result: REJECTED (non-final state q2)
-
-Input: aab
-  Steps: q0 --a--> q0 --a--> q0 --b--> q1
-  Result: ACCEPTED
-
-Input: babab
-  Steps: q0 --b--> q1 --a--> q0 --b--> q1 --a--> q0 --b--> q1
-  Result: ACCEPTED
+DFA: 4 states, alphabet = {a,b}
+Initial: q0  Final: {q1,q2}
 
 Input: ""
   Steps: q0
+  Result: REJECTED (non-final state q0)
+
+Input: a
+  Steps: q0 --a--> q1
   Result: ACCEPTED
+
+Input: ab
+  Steps: q0 --a--> q1 --b--> q2
+  Result: ACCEPTED
+
+Input: aba
+  Steps: q0 --a--> q1 --b--> q2 --a--> q3
+  Result: REJECTED (non-final state q3)
+
+Input: abab
+  Steps: q0 --a--> q1 --b--> q2 --a--> q3 --b--> q3
+  Result: REJECTED (non-final state q3)
 
 

@@ -1,1 +1,1 @@
-(ab)*
+regex a*b

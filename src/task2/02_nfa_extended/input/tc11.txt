@@ -1,0 +1,13 @@
+alphabet a
+transitions 3
+0 lambda 1
+1 lambda 2
+2 a 2
+initial 0
+finals 2
+queries 5
+0 ""
+0 a
+1 ""
+1 aa
+2 aaa

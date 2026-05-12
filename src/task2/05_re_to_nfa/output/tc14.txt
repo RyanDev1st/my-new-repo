@@ -1,0 +1,35 @@
+=== tc14.txt ===
+Regular expression: (ab+~)*
+Thompson's construction result:
+  Total states: 10 (0..9)
+  Start state:  8
+  Accept state: 9
+  Alphabet: {a,b}
+Transitions:
+  q0 --a--> q1
+  q2 --b--> q3
+  q1 --lambda--> q2
+  q4 --lambda--> q5
+  q6 --lambda--> q0
+  q6 --lambda--> q4
+  q3 --lambda--> q7
+  q5 --lambda--> q7
+  q8 --lambda--> q6
+  q7 --lambda--> q9
+  q8 --lambda--> q9
+  q7 --lambda--> q6
+
+Transition table (NFA):
+State	a		b		lambda
+--------------------------------------------------
+q0	{1}		{}		{}		
+q1	{}		{}		{2}		
+q2	{}		{3}		{}		
+q3	{}		{}		{7}		
+q4	{}		{}		{5}		
+q5	{}		{}		{7}		
+q6	{}		{}		{0,4}		
+q7	{}		{}		{6,9}		
+q8(start)	{}		{}		{6,9}		
+q9(final)	{}		{}		{}		
+

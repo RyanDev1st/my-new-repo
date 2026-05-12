@@ -1,0 +1,7 @@
+variables S B
+terminals a b
+start S
+productions 3
+S a b B
+B b -
+B a -

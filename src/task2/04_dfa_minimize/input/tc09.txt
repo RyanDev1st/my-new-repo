@@ -1,16 +1,11 @@
-5 2
-a b
-10
-q0 a q0
-q0 b q1
-q1 a q0
-q1 b q1
-q2 a q2
-q2 b q2
-q3 a q3
-q3 b q3
-q4 a q4
-q4 b q4
-q0
-1
-q0
+alphabet a b
+transitions 7
+0 a 1
+0 b 2
+1 a 3
+2 a 3
+3 a 4
+4 a 4
+4 b 4
+initial 0
+finals 3

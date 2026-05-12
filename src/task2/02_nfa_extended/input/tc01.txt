@@ -1,16 +1,13 @@
-3 2
-0 1
-4
-q0 0 q0
-q0 1 q0
-q0 0 q1
-q1 1 q2
-q0
-1
-q2
-5
-q0 01
-q0 001
-q0 1
-q0 11
-q0 101
+alphabet a b
+transitions 3
+0 a 0
+0 b 0
+0 a 1
+initial 0
+finals 1
+queries 5
+0 a
+0 b
+0 aa
+0 ba
+0 ""

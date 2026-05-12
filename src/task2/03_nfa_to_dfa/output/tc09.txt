@@ -9,8 +9,8 @@ Resulting DFA: 2 states
 DFA Transition Table:
 State		a		b		
 --------------------------------------------------
-D0(init)(final)={0}		D1		dead		
-D1={1}		dead		D0		
+D0(init)(final)={0}		D0		D1		
+D1={1}		dead		dead		
 
 Initial DFA state: D0
 Final DFA states: {D0}

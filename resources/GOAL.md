@@ -16,3 +16,8 @@ Note: Your programs must have sufficient documentation for compilation and execu
 
 # CHOICE
 We will do both the visualization console program tasks. Choose the easiest algorithm for task 1. 
+
+# !! The above is completed !!
+
+# Next goal
+Test and make sure everything work and is cohesive 

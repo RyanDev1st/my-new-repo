@@ -1,0 +1,48 @@
+=== PIPELINE ARCHITECTURE DIAGRAM ===
+
+PIPELINE 1: NFA to DFA to Acceptance Testing
+
+NFA Input
+(tc01.txt)
+    |
+    v
+[03_nfa_to_dfa]
+    |
+    | (DFA Table)
+    v
+DFA Output
+    |
+    | (Extract and Reformat)
+    v
+DFA Input Format
+    |
+    v
+[01_dfa_acceptance]
+    |
+    | (Results)
+    v
+Acceptance Results
+
+
+PIPELINE 2: DFA Minimize to Acceptance Testing
+
+Original DFA Input
+(tc02.txt)
+    |
+    v
+[04_dfa_minimize]
+    |
+    | (Minimized DFA Table)
+    v
+Minimized DFA Output
+    |
+    | (Extract and Reformat)
+    v
+Minimized DFA Input Format
+    |
+    v
+[01_dfa_acceptance]
+    |
+    | (Results)
+    v
+Minimized Acceptance Results

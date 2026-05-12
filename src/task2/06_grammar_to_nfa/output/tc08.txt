@@ -8,24 +8,20 @@ Productions and NFA transitions:
   S -> aS  =>  transitions: q0--a-->q0
   S -> B  =>  transitions: q0--lambda-->q1
   S -> lambda  =>  transitions: q0--lambda-->q2
-  B -> bbB  =>  transitions: q1--b-->q3  q3--b-->q1
-  B -> lambda  =>  transitions: q1--lambda-->q2
+  B -> bB  =>  transitions: q1--b-->q1
 
 === Resulting NFA ===
-Total states: 4 (0..3)
+Total states: 3 (0..2)
 Initial state: q0 (S)
 Final state: q2 (Vf)
 All transitions:
   q0 --a--> q0
   q0 --lambda--> q1
   q0 --lambda--> q2
-  q1 --b--> q3
-  q3 --b--> q1
-  q1 --lambda--> q2
+  q1 --b--> q1
 
 State labels:
   q0 = S
   q1 = B
   q2 = Vf (final)
-  q3 = intermediate
 

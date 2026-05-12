@@ -1,0 +1,15 @@
+alphabet a b
+transitions 5
+0 lambda 1
+1 a 1
+1 b 2
+2 lambda 3
+3 a 3
+initial 0
+finals 3
+queries 5
+0 b
+0 ba
+1 ba
+2 ""
+3 aa

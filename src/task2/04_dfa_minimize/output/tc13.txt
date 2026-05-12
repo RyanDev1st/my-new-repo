@@ -1,0 +1,22 @@
+=== tc13.txt ===
+Input DFA: 2 states, alphabet = {a,b}, initial=q0
+Accessible: {q0,q1}
+Inaccessible: {}
+mark() procedure:
+S2: Initial marking:
+    mark(q0, dead)
+    mark(q1, dead)
+  Pass 1:
+    (stable)
+
+Indistinguishable: (q0,q1)
+=== Minimized DFA ===
+States: 1
+Transition table:
+Class		States		on a		on b		
+----------------------------------------------------------------------
+C0(init)(final)		{q0,q1}		C0		C0		
+
+Initial state: C0
+Final states: C0 
+

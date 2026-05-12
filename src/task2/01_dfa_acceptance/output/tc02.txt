@@ -1,25 +1,21 @@
 === tc02.txt ===
-DFA: 2 states, alphabet = {a,b}
-Initial: q0  Final: {q1}
+DFA: 1 states, alphabet = {a,b}
+Initial: q0  Final: {q0}
+
+Input: ""
+  Steps: q0
+  Result: ACCEPTED
 
 Input: a
-  Steps: q0 --a--> q1
+  Steps: q0 --a--> q0
   Result: ACCEPTED
 
-Input: ba
-  Steps: q0 --b--> q0 --a--> q1
+Input: bb
+  Steps: q0 --b--> q0 --b--> q0
   Result: ACCEPTED
 
-Input: ab
-  Steps: q0 --a--> q1 --b--> q0
-  Result: REJECTED (non-final state q0)
-
-Input: b
-  Steps: q0 --b--> q0
-  Result: REJECTED (non-final state q0)
-
-Input: aab
-  Steps: q0 --a--> q1 --a--> q1 --b--> q0
-  Result: REJECTED (non-final state q0)
+Input: aaab
+  Steps: q0 --a--> q0 --a--> q0 --a--> q0 --b--> q0
+  Result: ACCEPTED
 
 

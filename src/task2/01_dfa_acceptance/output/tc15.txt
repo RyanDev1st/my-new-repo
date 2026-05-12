@@ -1,0 +1,25 @@
+=== tc15.txt ===
+DFA: 1 states, alphabet = {a,b}
+Initial: q0  Final: {q0}
+
+Input: ""
+  Steps: q0
+  Result: ACCEPTED
+
+Input: abba
+  Steps: q0 --a--> q0 --b--> q0 --b--> q0 --a--> q0
+  Result: ACCEPTED
+
+Input: bbbb
+  Steps: q0 --b--> q0 --b--> q0 --b--> q0 --b--> q0
+  Result: ACCEPTED
+
+Input: aaaa
+  Steps: q0 --a--> q0 --a--> q0 --a--> q0 --a--> q0
+  Result: ACCEPTED
+
+Input: babab
+  Steps: q0 --b--> q0 --a--> q0 --b--> q0 --a--> q0 --b--> q0
+  Result: ACCEPTED
+
+

@@ -1,18 +1,13 @@
-3 2
-a b
-6
-q0 a q1
-q0 b q2
-q1 a q1
-q1 b q1
-q2 a q2
-q2 b q2
-q0
-1
-q1
-5
-ab
-ba
-aab
-
+alphabet a b
+transitions 4
+0 a 1
+0 b 1
+1 a 0
+1 b 0
+initial 0
+finals -
+strings 4
+""
 a
+ab
+aab

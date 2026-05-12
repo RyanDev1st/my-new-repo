@@ -1,24 +1,23 @@
 === tc04.txt ===
 Right-Linear Grammar to NFA
-Variables: {S}
-Terminals: {a,b}
+Variables: {S,A}
+Terminals: {a}
 Start: S = state 0
-Final state: Vf = state 1
+Final state: Vf = state 2
 Productions and NFA transitions:
-  S -> aS  =>  transitions: q0--a-->q0
-  S -> bS  =>  transitions: q0--b-->q0
-  S -> lambda  =>  transitions: q0--lambda-->q1
+  S -> A  =>  transitions: q0--lambda-->q1
+  A -> a  =>  transitions: q1--a-->q2
 
 === Resulting NFA ===
-Total states: 2 (0..1)
+Total states: 3 (0..2)
 Initial state: q0 (S)
-Final state: q1 (Vf)
+Final state: q2 (Vf)
 All transitions:
-  q0 --a--> q0
-  q0 --b--> q0
   q0 --lambda--> q1
+  q1 --a--> q2
 
 State labels:
   q0 = S
-  q1 = Vf (final)
+  q1 = A
+  q2 = Vf (final)
 

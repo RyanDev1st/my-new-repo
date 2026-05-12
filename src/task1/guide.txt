@@ -1,0 +1,22 @@
+1. Download the zip
+2. Extract the files
+    What to expect?     
+        -An index.html file
+        -This guide you are reading
+3. Click on the html file and choose "Open in Browser"
+or run in terminal 
+
+`start /filepath/` (Git Bash)
+`/filepath/` (powershell)
+
+The thing might errors depending on bash or powershell version. 
+
+4. The html file should open in the browser. The instructions on how to use the visualization should be included 
+in the "?" tooltip. 
+
+I made the visualization as simple as it can get so it's so user friendly that spending 2 minutes should leave you 
+"nod nod I understood"
+
+:D happy visualizing!
+
+AUTOMATA!

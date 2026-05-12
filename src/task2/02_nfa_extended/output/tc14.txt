@@ -1,0 +1,39 @@
+=== tc14.txt ===
+NFA: 4 states, alphabet = {a,b}
+Initial: q0  Final: {q3}
+
+delta*(0, "b"):
+    lambda-closure({0}) = {0,1}
+    move({0,1}, b) = {2}
+    lambda-closure = {2,3}
+  => {2,3}  [ACCEPTED]
+
+delta*(0, "ba"):
+    lambda-closure({0}) = {0,1}
+    move({0,1}, b) = {2}
+    lambda-closure = {2,3}
+    move({2,3}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+delta*(1, "ba"):
+    lambda-closure({1}) = {1}
+    move({1}, b) = {2}
+    lambda-closure = {2,3}
+    move({2,3}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+delta*(2, ""):
+    lambda-closure({2}) = {2,3}
+  => {2,3}  [ACCEPTED]
+
+delta*(3, "aa"):
+    lambda-closure({3}) = {3}
+    move({3}, a) = {3}
+    lambda-closure = {3}
+    move({3}, a) = {3}
+    lambda-closure = {3}
+  => {3}  [ACCEPTED]
+
+

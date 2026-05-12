@@ -1,11 +1,8 @@
-// Regular Expression to NFA (Thompson's Construction)
-// Algorithm: re2nfa() -- slides 17-20, Chapter 3
-//
-// Input format (input.txt):
-//   regex_string
-//   (use + for union, * for Kleene star, concatenation is implicit,
-//    () for grouping, ~ for lambda/epsilon)
-//   Empty input is invalid; use ~ for lambda.
+// Regex to NFA.
+// Algorithm: Thompson construction from Chapter 3.
+// Input pipeline: read one regular expression from each .txt file in input/.
+// Bundled samples use `regex <expr>` to make the file self-explanatory.
+// Output: NFA states, transitions, and transition table.
 //
 // Grammar parsed:
 //   expr   -> term ('+' term)*
@@ -21,10 +18,11 @@
 #include <algorithm>
 #include <map>
 #include <filesystem>
+#include <sstream>
 namespace fs = std::filesystem;
 using namespace std;
 
-// Tee: write to two streambufs simultaneously
+// Write to console and output file.
 class TeeBuf : public streambuf {
     streambuf *b1, *b2;
 public:
@@ -184,6 +182,10 @@ int main() {
         }
         while (!re.empty() && (re.back()=='\r' || re.back()=='\n' || re.back()==' ')) re.pop_back();
         if (re.empty()) { cerr<<"Input error: empty regex. Use ~ for lambda.\n"; cout.rdbuf(oldBuf); continue; }
+        if (re.rfind("regex ", 0) == 0) re = re.substr(6);
+        if (re == "regex") { cerr<<"Input error: missing regex after `regex`.\n"; cout.rdbuf(oldBuf); continue; }
+        while (!re.empty() && re.front()==' ') re.erase(re.begin());
+        if (re.empty()) { cerr<<"Input error: empty regex. Use ~ for lambda.\n"; cout.rdbuf(oldBuf); continue; }
 
         cout << "=== " << fp.filename().string() << " ===\n";
         cout << "Regular expression: " << re << "\n";
@@ -217,7 +219,8 @@ int main() {
             else delta[e.from][symIdx[e.sym]].insert(e.to);
         }
         cout << "\nTransition table (NFA):\nState\t";
-        for (char c:alpha) cout<<c<<"\t\t"; cout<<"lambda\n"<<string(50,'-')<<"\n";
+        for (char c:alpha) cout<<c<<"\t\t";
+        cout<<"lambda\n"<<string(50,'-')<<"\n";
         for (int i=0;i<stateCount;i++) {
             cout<<"q"<<i; if (i==result.start) cout<<"(start)"; if (i==result.accept) cout<<"(final)"; cout<<"\t";
             for (int a=0;a<=M;a++) { cout<<"{"; bool f=true; for (int s:delta[i][a]) { if (!f) cout<<","; cout<<s; f=false; } cout<<"}\t\t"; }

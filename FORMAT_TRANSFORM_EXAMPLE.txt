@@ -1,0 +1,68 @@
+=== DETAILED FORMAT TRANSFORMATION EXAMPLE ===
+
+EXAMPLE 1: NFA to DFA Conversion
+
+STEP A: Original NFA Input (program 03_nfa_to_dfa/input/tc01.txt)
+---
+alphabet a b
+transitions 6
+0 a 1
+0 b 0
+1 a 1
+1 b 2
+2 a 1
+2 b 0
+initial 0
+finals 2
+---
+
+STEP B: Program Output (03_nfa_to_dfa/output/tc01.txt - excerpt)
+---
+NFA: 3 states, alphabet = {a,b}
+Initial: q0  Final NFA states: {q2}
+
+Resulting DFA: 3 states
+DFA Transition Table:
+State       a       b
+D0(init)={0}        D1      D0
+D1={1}      D1      D2
+D2(final)={2}       D1      D0
+
+Initial DFA state: D0
+Final DFA states: {D2}
+---
+
+STEP C: Extraction and Reformatting
+---
+Extraction rules:
+1. Copy alphabet from output: symbols {a,b}
+2. Count transitions in table: 6 total (3 rows x 2 columns)
+3. Map state labels: D0 becomes 0, D1 becomes 1, D2 becomes 2
+4. Extract transitions from table using mapped labels
+5. Extract initial state: marked (init) is state 0
+6. Extract final states: marked (final) is state 2
+---
+
+STEP D: Reformatted Output (Ready for Program 01)
+---
+alphabet a b
+transitions 6
+0 a 1
+0 b 0
+1 a 1
+1 b 2
+2 a 1
+2 b 0
+initial 0
+finals 2
+strings 5
+""
+a
+ab
+aba
+abba
+---
+
+REUSABILITY VERIFICATION:
+This reformatted DFA is now in the exact format required by program 01_dfa_acceptance
+It can be used directly as input to test string acceptance/rejection

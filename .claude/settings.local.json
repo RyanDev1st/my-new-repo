@@ -6,6 +6,37 @@
       "PowerShell(Test-Path *)"
     ]
   },
+  "skillOverrides": {
+    "agents-md:cli": "name-only",
+    "agents-md:init": "name-only",
+    "agents-md:migration": "name-only",
+    "brandkit": "name-only",
+    "code-review": "name-only",
+    "config:bash-timeout": "name-only",
+    "create-command": "name-only",
+    "create-subagent": "name-only",
+    "dev:cleanup": "name-only",
+    "gh:repo-init": "name-only",
+    "git:checkout": "name-only",
+    "git:commit": "name-only",
+    "git:ignore-init": "name-only",
+    "git:push": "name-only",
+    "git:status": "name-only",
+    "gpt-taste": "name-only",
+    "high-end-visual-design": "name-only",
+    "image-to-code": "name-only",
+    "imagegen-frontend-mobile": "name-only",
+    "imagegen-frontend-web": "name-only",
+    "industrial-brutalist-ui": "name-only",
+    "minimalist-ui": "name-only",
+    "redesign-existing-projects": "name-only",
+    "spec:create": "name-only",
+    "spec:decompose": "name-only",
+    "spec:execute": "name-only",
+    "spec:validate": "name-only",
+    "stitch-design-taste": "name-only",
+    "validate-and-fix": "name-only"
+  },
   "spinnerTipsEnabled": false,
   "prefersReducedMotion": false
 }

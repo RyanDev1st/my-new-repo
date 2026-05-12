@@ -5,15 +5,13 @@ Variables: {q0,q1,q2}
 Terminals: {a,b}
 Start symbol: q0
 Productions:
-  q0 -> a q0
-  q0 -> b q0
-  q0 -> b q1
-  q1 -> b q2
+  q0 -> a q1
+  q1 -> b q0
   q2 -> lambda
 
 Summary of grammar productions:
 ----------------------------------------
-q0 -> aq0 | bq0 | bq1
-q1 -> bq2
+q0 -> aq1
+q1 -> bq0
 q2 -> lambda
 

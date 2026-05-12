@@ -1,7 +1,7 @@
 # Task 2 Transition Row Format Design
 
 Date: 2026-04-20
-Status: Approved in chat, pending written-spec review
+Status: Approved
 
 ## Goal
 
@@ -97,6 +97,16 @@ Update DFA visualization help text and example guidance in `src/task1/index.html
 - mention lambda identifiers accepted by project conventions: `""`, `lambda`, `lamda`
 
 Task 1 remains a DFA visualizer; lambda is only documented as project syntax reference, not enabled as DFA behavior.
+
+## Comment Style
+
+- Keep comments short and easy to read.
+- Remove extra long inline comments when they are not needed.
+- Keep top-of-file comments in each program.
+- Top-of-file comments should explain, in simple English:
+  - what algorithm the file implements
+  - what input pipeline or input format the file reads
+  - what the program outputs
 
 ## Non-Goals
 

@@ -1,0 +1,35 @@
+=== tc13.txt ===
+NFA: 2 states, alphabet = {a,b}
+Initial: q0  Final: {q1}
+
+delta*(0, "c"):
+    lambda-closure({0}) = {0}
+    [symbol not in alphabet]
+  => {}  [REJECTED]
+
+delta*(0, "ac"):
+    lambda-closure({0}) = {0}
+    move({0}, a) = {1}
+    lambda-closure = {1}
+    [symbol not in alphabet]
+  => {}  [REJECTED]
+
+delta*(1, "b"):
+    lambda-closure({1}) = {1}
+    move({1}, b) = {}
+    lambda-closure = {}
+  => {}  [REJECTED]
+
+delta*(1, ""):
+    lambda-closure({1}) = {1}
+  => {1}  [ACCEPTED]
+
+delta*(0, "bb"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {}
+    lambda-closure = {}
+    move({}, b) = {}
+    lambda-closure = {}
+  => {}  [REJECTED]
+
+

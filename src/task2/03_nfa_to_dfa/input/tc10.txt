@@ -1,12 +1,10 @@
-3 2
-a b
-6
-q0 a q0
-q0 b q0
-q0 a q1
-q1 a q2
-q2 a q2
-q2 b q2
-q0
-1
-q2
+alphabet a b
+transitions 6
+0 lambda 1
+0 a 2
+1 b 3
+2 b 4
+3 lambda 2
+4 lambda 0
+initial 0
+finals 4

@@ -1,15 +1,10 @@
-3 1
-a
-3
-q0 ~ q1
-q1 ~ q2
-q0 a q0
-q0
-1
-q2
-5
-q0
-q0 a
-q0 aa
-q1
-q2
+alphabet a b
+transitions 2
+0 lambda 0
+0 a 1
+initial 0
+finals 1
+queries 3
+0 ""
+0 a
+0 b

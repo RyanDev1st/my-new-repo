@@ -1,47 +1,37 @@
 === tc01.txt ===
-NFA: 3 states, alphabet = {0,1}
-Initial: q0  Final: {q2}
+NFA: 2 states, alphabet = {a,b}
+Initial: q0  Final: {q1}
 
-delta*(0, "01"):
+delta*(0, "a"):
     lambda-closure({0}) = {0}
-    move({0}, 0) = {0,1}
+    move({0}, a) = {0,1}
     lambda-closure = {0,1}
-    move({0,1}, 1) = {0,2}
-    lambda-closure = {0,2}
-  => {0,2}  [ACCEPTED]
+  => {0,1}  [ACCEPTED]
 
-delta*(0, "001"):
+delta*(0, "b"):
     lambda-closure({0}) = {0}
-    move({0}, 0) = {0,1}
-    lambda-closure = {0,1}
-    move({0,1}, 0) = {0,1}
-    lambda-closure = {0,1}
-    move({0,1}, 1) = {0,2}
-    lambda-closure = {0,2}
-  => {0,2}  [ACCEPTED]
-
-delta*(0, "1"):
-    lambda-closure({0}) = {0}
-    move({0}, 1) = {0}
+    move({0}, b) = {0}
     lambda-closure = {0}
   => {0}  [REJECTED]
 
-delta*(0, "11"):
+delta*(0, "aa"):
     lambda-closure({0}) = {0}
-    move({0}, 1) = {0}
-    lambda-closure = {0}
-    move({0}, 1) = {0}
-    lambda-closure = {0}
-  => {0}  [REJECTED]
-
-delta*(0, "101"):
-    lambda-closure({0}) = {0}
-    move({0}, 1) = {0}
-    lambda-closure = {0}
-    move({0}, 0) = {0,1}
+    move({0}, a) = {0,1}
     lambda-closure = {0,1}
-    move({0,1}, 1) = {0,2}
-    lambda-closure = {0,2}
-  => {0,2}  [ACCEPTED]
+    move({0,1}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, "ba"):
+    lambda-closure({0}) = {0}
+    move({0}, b) = {0}
+    lambda-closure = {0}
+    move({0}, a) = {0,1}
+    lambda-closure = {0,1}
+  => {0,1}  [ACCEPTED]
+
+delta*(0, ""):
+    lambda-closure({0}) = {0}
+  => {0}  [REJECTED]
 
 

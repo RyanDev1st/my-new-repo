@@ -1,15 +1,13 @@
-2 2
-a b
-3
-q0 a q0
-q0 b q0
-q0 a q1
-q0
-1
-q1
-5
-q0 a
-q0 ba
-q0 b
-q0 aa
-q0 aba
+alphabet a b c
+transitions 4
+0 a 1
+1 b 2
+2 c 3
+0 lambda 1
+initial 0
+finals 3
+queries 4
+0 ""
+0 bc
+0 abc
+0 ac

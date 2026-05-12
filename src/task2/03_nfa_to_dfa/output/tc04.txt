@@ -1,17 +1,19 @@
 === tc04.txt ===
-NFA: 2 states, alphabet = {a,b}
-Initial: q0  Final NFA states: {q1}
+NFA: 3 states, alphabet = {a,b}
+Initial: q0  Final NFA states: {q2}
 Subset construction:
   Start: {0} = D0
   New DFA state D1 = {0,1}
+  New DFA state D2 = {0,2}
 
-Resulting DFA: 2 states
+Resulting DFA: 3 states
 DFA Transition Table:
 State		a		b		
 --------------------------------------------------
 D0(init)={0}		D1		D0		
-D1(final)={0,1}		D1		D0		
+D1={0,1}		D1		D2		
+D2(final)={0,2}		D1		D0		
 
 Initial DFA state: D0
-Final DFA states: {D1}
+Final DFA states: {D2}
 

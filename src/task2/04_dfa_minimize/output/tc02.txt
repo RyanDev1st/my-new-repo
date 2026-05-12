@@ -1,23 +1,27 @@
 === tc02.txt ===
-Input DFA: 2 states, alphabet = {a,b}, initial=q0
-Accessible: {q0,q1}
+Input DFA: 3 states, alphabet = {a,b}, initial=q0
+Accessible: {q0,q1,q2}
 Inaccessible: {}
 mark() procedure:
 S2: Initial marking:
     mark(q0, q1)
-    mark(q0, dead)
+    mark(q0, q2)
+    mark(q1, dead)
+    mark(q2, dead)
   Pass 1:
+    mark(q0, dead) via a
+  Pass 2:
     (stable)
 
-Indistinguishable: (none)
+Indistinguishable: (q1,q2)
 === Minimized DFA ===
 States: 2
 Transition table:
 Class		States		on a		on b		
 ----------------------------------------------------------------------
-C0(init)(final)		{q0}		C0		C1		
-C1		{q1}		C1		C1		
+C0(init)		{q0}		C1		C1		
+C1(final)		{q1,q2}		C0		C0		
 
 Initial state: C0
-Final states: C0 
+Final states: C1 
 

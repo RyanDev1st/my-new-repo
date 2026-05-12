@@ -1,0 +1,4 @@
+4. SEMANTIC PRESERVATION THROUGH PIPELINES
+   Minimization algorithms preserve language acceptance:
+   - Minimized DFAs accept same string set as originals
+   - Acceptance test results validate semantic equivalence

@@ -1,0 +1,33 @@
+=== VISUAL TEST PIPELINE SUMMARY ===
+
+INPUT NFA (3 states, 6 transitions)
+       v
+[03_nfa_to_dfa]
+       v
+[OUTPUT: DFA Transition Table]
+       v
+[EXTRACT AND REFORMAT]
+       v
+[DFA in Standard Input Format]
+       v
+[01_dfa_acceptance]
+       v
+RESULT: SUCCESS - Format Compatible and Functional
+
+
+TEST 2: DFA Minimize to Acceptance
+==================================
+
+INPUT DFA (4 states, 4 transitions)
+       v
+[04_dfa_minimize]
+       v
+[OUTPUT: Minimized DFA Table (2 states)]
+       v
+[EXTRACT AND REFORMAT]
+       v
+[Minimized DFA in Standard Format]
+       v
+[01_dfa_acceptance]
+       v
+RESULT: SUCCESS - Semantically Equivalent

@@ -1,0 +1,16 @@
+alphabet a b
+transitions 6
+0 a 2
+0 b 1
+1 a 1
+1 b 1
+2 a 2
+2 b 2
+initial 0
+finals 1
+strings 5
+b
+ba
+ab
+""
+bc

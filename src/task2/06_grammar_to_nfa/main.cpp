@@ -1,15 +1,9 @@
-// Right-Linear Grammar to NFA
-// Algorithm: G_R to nfa() -- slides 39-42, Chapter 3
-//
-// Input format (input/ directory, each .txt file):
-//   V_count
-//   VarName0 VarName1 ...     (first = start symbol)
-//   T_count
-//   t1 t2 ...                 (terminal chars)
-//   P_count
-//   LHSVarName term1 term2 ... [RHSVarName | -]
-//     where - means no RHS variable (terminal-only or lambda production)
-//     Lambda production: LHSName -  (just name and dash)
+// Right-linear grammar to NFA.
+// Algorithm: G_R to nfa() from Chapter 3.
+// Input pipeline: read grammar data from each .txt file in input/.
+// Bundled samples use labeled sections: `variables`, `terminals`, `start`,
+// and `productions`.
+// Output: NFA states, transitions, and state labels.
 
 #include <iostream>
 #include <fstream>
@@ -22,7 +16,7 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-// Tee: write to two streambufs simultaneously
+// Write to console and output file.
 class TeeBuf : public streambuf {
     streambuf *b1, *b2;
 public:
@@ -39,30 +33,95 @@ public:
 
 struct Edge { int from, to; char sym; };
 
+vector<string> splitTokens(const string& line) {
+    istringstream iss(line);
+    vector<string> tokens;
+    string token;
+    while (iss >> token) tokens.push_back(token);
+    return tokens;
+}
+
+string buildLegacyGrammarInput(const string& text, const string& fname, string& error) {
+    istringstream in(text);
+    string line;
+    if (!getline(in, line)) { error = fname + " is empty"; return ""; }
+    vector<string> tokens = splitTokens(line);
+    if (tokens.size() < 2 || tokens[0] != "variables") { error = "first line must be `variables ...`"; return ""; }
+    vector<string> variables(tokens.begin() + 1, tokens.end());
+
+    if (!getline(in, line)) { error = "missing terminals line"; return ""; }
+    tokens = splitTokens(line);
+    if (tokens.size() < 2 || tokens[0] != "terminals") { error = "expected `terminals ...`"; return ""; }
+    vector<string> terminals(tokens.begin() + 1, tokens.end());
+
+    if (!getline(in, line)) { error = "missing start line"; return ""; }
+    tokens = splitTokens(line);
+    if (tokens.size() != 2 || tokens[0] != "start") { error = "expected `start <variable>`"; return ""; }
+    if (tokens[1] != variables.front()) { error = "start variable must match the first variable"; return ""; }
+
+    if (!getline(in, line)) { error = "missing productions line"; return ""; }
+    tokens = splitTokens(line);
+    if (tokens.size() != 2 || tokens[0] != "productions") { error = "expected `productions <count>`"; return ""; }
+    int P = stoi(tokens[1]);
+
+    vector<string> productions;
+    for (int i = 0; i < P; i++) {
+        if (!getline(in, line)) { error = "missing production line"; return ""; }
+        productions.push_back(line);
+    }
+
+    ostringstream out;
+    out << variables.size() << "\n";
+    for (size_t i = 0; i < variables.size(); i++) {
+        if (i) out << " ";
+        out << variables[i];
+    }
+    out << "\n" << terminals.size() << "\n";
+    for (size_t i = 0; i < terminals.size(); i++) {
+        if (i) out << " ";
+        out << terminals[i];
+    }
+    out << "\n" << P << "\n";
+    for (const string& row : productions) out << row << "\n";
+    return out.str();
+}
+
 bool processFile(const fs::path& fp) {
     ifstream fin(fp);
     if (!fin) { cerr<<"Cannot open "<<fp.filename().string()<<"\n"; return false; }
+    string text((istreambuf_iterator<char>(fin)), istreambuf_iterator<char>());
+    istringstream probe(text);
+    string firstLine;
+    if (!getline(probe, firstLine)) { cerr<<"Input error: "<<fp.filename().string()<<" is empty.\n"; return false; }
+    string canonical = text;
+    vector<string> firstTokens = splitTokens(firstLine);
+    if (!firstTokens.empty() && firstTokens[0] == "variables") {
+        string error;
+        canonical = buildLegacyGrammarInput(text, fp.filename().string(), error);
+        if (canonical.empty()) { cerr<<"Input error: "<<error<<".\n"; return false; }
+    }
+    istringstream input(canonical);
 
     int V;
-    if (!(fin>>V)) { cerr<<"Input error: "<<fp.filename().string()<<" missing V_count.\n"; return false; }
+    if (!(input>>V)) { cerr<<"Input error: "<<fp.filename().string()<<" missing V_count.\n"; return false; }
     vector<string> varNames(V);
     map<string,int> varIdx;
     for (int i=0;i<V;i++) {
-        if (!(fin>>varNames[i])) { cerr<<"Input error: missing variable names.\n"; return false; }
+        if (!(input>>varNames[i])) { cerr<<"Input error: missing variable names.\n"; return false; }
         varIdx[varNames[i]] = i;
     }
 
     int T;
-    if (!(fin>>T)) { cerr<<"Input error: missing T_count.\n"; return false; }
+    if (!(input>>T)) { cerr<<"Input error: missing T_count.\n"; return false; }
     vector<char> term(T);
     map<char,int> termIdx;
     for (int i=0;i<T;i++) {
-        if (!(fin>>term[i])) { cerr<<"Input error: missing terminal symbols.\n"; return false; }
+        if (!(input>>term[i])) { cerr<<"Input error: missing terminal symbols.\n"; return false; }
         termIdx[term[i]] = i;
     }
 
     int P;
-    if (!(fin>>P)) { cerr<<"Input error: missing P_count.\n"; return false; }
+    if (!(input>>P)) { cerr<<"Input error: missing P_count.\n"; return false; }
 
     int Vf = V; // final state index
     int nextTemp = V + 1;
@@ -77,10 +136,10 @@ bool processFile(const fs::path& fp) {
     cout<<"Productions and NFA transitions:\n";
 
     string line;
-    getline(fin, line); // consume newline after P
+    getline(input, line); // consume newline after P
 
     for (int p=0;p<P;p++) {
-        if (!getline(fin, line)) {
+        if (!getline(input, line)) {
             cerr<<"Input error: missing production "<<(p+1)<<".\n"; return false;
         }
         istringstream iss(line);

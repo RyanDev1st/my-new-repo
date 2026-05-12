@@ -3,9 +3,18 @@
 ## Environment
 
 - Compiler: g++ 13.2.0 (MSYS2 UCRT64) at `C:\msys64\ucrt64\bin\g++.exe`
-- Verification rerun on 2026-04-19.
-- All programs compile and run correctly with their sample inputs.
+- Verification rerun on 2026-04-20.
+- All programs compile cleanly with `-Wall -Wextra -pedantic` and run correctly with their bundled sample inputs.
+- Coverage now includes 15 bundled cases per exercise (`tc01`-`tc15`), including 35 additional arbitrary edge/corner cases added in this pass.
+- Automata-style inputs in `01`, `02`, `03`, `04`, and `07` now use labeled sample files with bare-integer transition rows such as `0 a 1`.
+- NFA lambda input aliases are now `""`, `lambda`, and `lamda`.
+- `05_re_to_nfa` and `06_grammar_to_nfa` still take regex and grammar input per `GOAL.md`, but bundled files now use labeled first lines (`regex ...`, `variables ...`) so the samples explain themselves.
 - All console programs now reject empty `input.txt` files with an `Input error:` message instead of crashing or printing garbage output.
+- `03_nfa_to_dfa` sample metadata was corrected where several testcases had the wrong transition count.
+- `04_dfa_minimize/tc05` and `07_nfa_to_grammar/tc05`, `tc08` also had wrong transition counts in older raw files and were normalized during the labeled-format cleanup.
+- Fresh 2026-04-20 rerun after the labeled-format cleanup: all 7 programs compile with `-Wall -Wextra -pedantic`, all bundled inputs run, and only `07_nfa_to_grammar` prints 2 expected lambda-transition warnings (`tc08`, `tc15`).
+- Checked-in output snapshots for `02_nfa_extended` and `03_nfa_to_dfa` were refreshed from the verified run.
+- Checked-in output snapshots for every exercise now include the new `tc11`-`tc15` cases.
 
 ## Quick Start
 
@@ -93,13 +102,23 @@ q3 → aq3 | lambda
 ```
 Correct per nfa2G_R algorithm (S1/S2/S3 from slides 44-45) ✓
 
+## Expanded Arbitrary Coverage (`tc11`-`tc15`)
+
+- `01_dfa_acceptance`: `tc11` even-`a` DFA with empty-string acceptance; `tc12` accept-if-starts-with-`b` plus invalid-symbol rejection; `tc13` missing transition -> `DEAD`; `tc14` multi-final 3-cycle; `tc15` single-state universal acceptor.
+- `02_nfa_extended`: `tc11` lambda-chain accepts empty via closure; `tc12` branching on same symbol then accept on `ab`; `tc13` invalid symbol + empty-set results; `tc14` lambda after symbol and non-start queries; `tc15` no reachable final except separate component.
+- `03_nfa_to_dfa`: `tc11` deterministic 2-state collapse; `tc12` lambda-start subset `{0,1,2}`; `tc13` branching `a` creates 3 DFA states; `tc14` final-by-lambda-closure makes both DFA states final; `tc15` reachable DFA with no final states.
+- `04_dfa_minimize`: `tc11` already minimal DFA stays at 3 states; `tc12` unreachable state removed and `(q0,q1)` merged; `tc13` all-final DFA collapses to 1 state; `tc14` no-final DFA collapses to 1 state; `tc15` equivalent final pair `(q1,q2)` merges.
+- `05_re_to_nfa`: `tc11` lambda-only regex; `tc12` plain concatenation `ab`; `tc13` union `a+b`; `tc14` nested precedence with star `(ab+~)*`; `tc15` mixed star/concat/union `a*(ba+ab)`.
+- `06_grammar_to_nfa`: `tc11` grammar with lambda production; `tc12` multi-terminal production `abB`; `tc13` start-symbol lambda grammar; `tc14` branching grammar over three variables; `tc15` mixed multi-terminal chain plus lambda exit.
+- `07_nfa_to_grammar`: `tc11` simple accepting chain; `tc12` same-symbol branching to two finals; `tc13` no-final NFA gives no lambda productions; `tc14` multiple finals with loops; `tc15` lambda-transition note path exercised and symbol-transition grammar still emitted for reachable non-lambda edges.
+
 ## To Change Input
 
-Edit `input.txt` in the corresponding directory and re-run `./prog.exe`.
-Input format is documented at the top of each `main.cpp`.
+Edit an existing `.txt` file under the corresponding `input/` directory, or add a new `.txt` testcase there, then re-run `./prog.exe`.
+Input format is documented at the top of each `main.cpp` and in `src/task2/guideline.md`.
 
 Edge-case notes:
-- `01_dfa_acceptance`: use a blank line or `""` for the empty string.
-- `02_nfa_extended`: use `q` alone or `q ""` for the empty string query.
-- `05_re_to_nfa`: use `~` for lambda; an empty regex line is treated as invalid input.
-- All console programs now stop with `Input error:` if `input.txt` is empty.
+- `01_dfa_acceptance`: use labeled headers and `strings K`; use a blank line or `""` for the empty string.
+- `02_nfa_extended`: use labeled headers and `queries K`; use a bare integer state id, for example `0 ab`; use `0` alone or `0 ""` for the empty string query.
+- `05_re_to_nfa`: use `regex <expr>`; use `~` for lambda; an empty regex line is treated as invalid input.
+- `06_grammar_to_nfa`: use `variables`, `terminals`, `start`, and `productions` headers.

@@ -1,0 +1,41 @@
+=== PIPELINE TEST 1: NFA to DFA to Acceptance ===
+
+INPUT: NFA from 03_nfa_to_dfa/input/tc01.txt
+alphabet a b
+transitions 6
+0 a 1
+0 b 0
+1 a 1
+1 b 2
+2 a 1
+2 b 0
+initial 0
+finals 2
+
+OUTPUT FROM 03_nfa_to_dfa (DFA Transition Table):
+DFA Transition Table:
+State       a       b
+D0(init)={0}        D1      D0
+D1={1}      D1      D2
+D2(final)={2}       D1      D0
+
+Initial DFA state: D0
+Final DFA states: {D2}
+
+REUSED DFA INPUT FOR 01_dfa_acceptance:
+alphabet a b
+transitions 3
+0 a 1
+0 b 0
+1 a 1
+1 b 2
+2 a 1
+2 b 0
+initial 0
+finals 2
+strings 5
+""
+a
+ab
+aba
+abba
