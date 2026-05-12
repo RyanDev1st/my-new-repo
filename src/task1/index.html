@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="DFA String Acceptance — local tactical telemetry visualizer with robust transition-table graph rendering.">
-<title>DFA Tactical Visualizer</title>
+<meta name="description" content="DFA String Acceptance — interactive graph visualizer for finite automata.">
+<title>DFA String Acceptance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,7 +24,6 @@
   --red: #e61919;
   --green: #4af626;
   --black: #050505;
-  --font-display: 'Archivo Black', 'Arial Black', Impact, sans-serif;
   --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -34,7 +33,6 @@ body {
   min-height: 100dvh;
   background:
     repeating-linear-gradient(0deg, rgba(255,255,255,0.024) 0 1px, transparent 1px 4px),
-    radial-gradient(circle at 18% 12%, rgba(230,25,25,0.12), transparent 28rem),
     #0a0a0a;
   color: var(--ink);
   font-family: var(--font-mono);
@@ -62,8 +60,8 @@ button { cursor: pointer; }
   left: 16px;
   top: -80px;
   z-index: 60;
-  background: var(--red);
-  color: white;
+  background: var(--ink);
+  color: var(--black);
   padding: 10px 14px;
   text-decoration: none;
   text-transform: uppercase;
@@ -71,134 +69,18 @@ button { cursor: pointer; }
 }
 .skip-link:focus { top: 16px; }
 
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: stretch;
-  gap: 1px;
-  margin: 16px auto 0;
-  width: min(1440px, calc(100% - 32px));
-  background: var(--line);
-  border: 1px solid var(--line-strong);
-}
-.nav > * {
-  background: rgba(17, 17, 17, 0.94);
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  padding: 0 18px;
-}
-.brand {
-  gap: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 800;
-}
-.brand-mark {
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--red);
-  color: var(--red);
-}
-.brand small { color: var(--quiet); font-weight: 600; letter-spacing: 0.06em; }
-.nav-link {
-  color: var(--ink);
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  transition: background 180ms var(--ease), color 180ms var(--ease);
-}
-.nav-link:hover { background: var(--red); color: white; }
-.nav-link:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 2px solid var(--red);
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--line-strong);
   outline-offset: 3px;
 }
 
-.hero {
-  width: min(1440px, calc(100% - 32px));
-  margin: 56px auto 42px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line-strong);
-}
-.hero-copy, .hero-telemetry { background: var(--panel); padding: clamp(22px, 4vw, 56px); }
-.kicker, .section-eye, .field-label, .readout dt, .status-line {
+.section-eye, .field-label {
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.kicker { margin-bottom: 18px; color: var(--red); }
-.title {
-  max-width: 12ch;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: clamp(3.4rem, 9.2vw, 10.5rem);
-  line-height: 0.86;
-  letter-spacing: -0.06em;
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-.lede {
-  max-width: 64ch;
-  margin-top: 22px;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-.hero-telemetry {
-  display: grid;
-  align-content: space-between;
-  gap: 30px;
-  min-height: 320px;
-}
-.scope-box {
-  border: 1px solid var(--line-strong);
-  min-height: 190px;
-  background:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px),
-    var(--black);
-  background-size: 28px 28px;
-  position: relative;
-  overflow: hidden;
-}
-.scope-box::before, .scope-box::after {
-  content: "";
-  position: absolute;
-  border: 1px solid var(--red);
-  width: 72px;
-  height: 72px;
-}
-.scope-box::before { left: 24px; top: 24px; border-right: 0; border-bottom: 0; }
-.scope-box::after { right: 24px; bottom: 24px; border-left: 0; border-top: 0; }
-.scope-dot {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 9px;
-  height: 9px;
-  background: var(--green);
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 18px rgba(74, 246, 38, 0.72);
-}
-.readout {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--line);
-}
-.readout > div { background: var(--panel-2); padding: 12px; }
-.readout dd { margin-top: 6px; color: var(--ink); font-weight: 800; font-size: 1.2rem; }
-.readout .live dd { color: var(--green); }
 
 main.grid {
   width: min(1440px, calc(100% - 32px));
@@ -213,7 +95,7 @@ main.grid {
 .shell::before, .shell::after {
   content: "+";
   position: absolute;
-  color: var(--red);
+  color: var(--line-strong);
   font: 700 12px/1 var(--font-mono);
   z-index: 2;
 }
@@ -226,7 +108,7 @@ main.grid {
 .card-step { grid-column: span 8; }
 .card-trace { grid-column: span 12; }
 .section-eye { color: var(--ink); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
-.section-eye::before { content: "//"; color: var(--red); }
+.section-eye::before { content: "//"; color: var(--quiet); }
 
 .canvas-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -269,9 +151,35 @@ canvas { display: block; width: 100%; }
   color: var(--muted);
   z-index: 3;
 }
+.edge-ledger {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin-top: 10px;
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+}
+.edge-ledger:empty { display: none; }
+.edge-item {
+  background: var(--panel-2);
+  color: var(--muted);
+  padding: 7px 9px;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edge-item strong { color: var(--ink); }
+.edge-item.live { color: #f5c518; }
+.edge-item.live strong { color: #f5c518; }
+.edge-item.self { color: var(--quiet); }
 .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .canvas-legend i { display: inline-block; width: 8px; height: 8px; background: var(--ink); }
-.canvas-legend .ll-final i, .canvas-legend .ll-active i { background: var(--green); }
+.canvas-legend .ll-final i { background: var(--ink); }
+.canvas-legend .ll-active i { background: #f5c518; }
+.canvas-legend .ll-accept i { background: var(--green); }
 .canvas-legend .ll-error i { background: var(--red); }
 
 .field-label { display: block; margin: 14px 0 6px; }
@@ -287,7 +195,7 @@ input[type="text"], textarea, select {
   transition: border-color 180ms var(--ease), background 180ms var(--ease);
 }
 textarea { resize: vertical; min-height: 150px; line-height: 1.65; }
-input:focus, textarea:focus, select:focus { background: var(--panel-2); border-color: var(--red); }
+input:focus, textarea:focus, select:focus { background: var(--panel-2); border-color: var(--ink); }
 select { cursor: pointer; }
 select option { background: var(--panel); color: var(--ink); }
 .label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -331,14 +239,14 @@ select option { background: var(--panel); color: var(--ink); }
   font-weight: 800;
   transition: transform 180ms var(--ease), background 180ms var(--ease), color 180ms var(--ease), border-color 180ms var(--ease);
 }
-.btn:hover { transform: translate(-2px, -2px); background: var(--red); border-color: var(--red); color: white; }
+.btn:hover { transform: translate(-2px, -2px); background: var(--ink); border-color: var(--ink); color: var(--black); }
 .btn:active { transform: translate(0, 0); }
 .btn-primary { background: var(--ink); color: var(--black); }
 .btn-success { border-color: var(--green); color: var(--green); }
-.btn-danger { border-color: var(--red); color: var(--red); }
+.btn-danger { border-color: var(--line-strong); color: var(--muted); }
 
 .speed-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 10px 0 14px; }
-input[type="range"] { width: 100%; accent-color: var(--red); }
+input[type="range"] { width: 100%; accent-color: var(--ink); }
 #speed-val { color: var(--muted); font-size: 0.72rem; }
 .sym-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .sym-cell {
@@ -350,7 +258,7 @@ input[type="range"] { width: 100%; accent-color: var(--red); }
   font-weight: 800;
 }
 .sym-cell.done { color: var(--green); border-color: var(--green); }
-.sym-cell.current { color: var(--black); background: var(--green); border-color: var(--green); }
+.sym-cell.current { color: var(--black); background: #f5c518; border-color: #f5c518; }
 .sym-cell.pending { opacity: 0.45; }
 #msg { color: var(--muted); font-size: 0.86rem; }
 .accept { color: var(--green); font-weight: 800; }
@@ -370,14 +278,10 @@ input[type="range"] { width: 100%; accent-color: var(--red); }
 .trace-log:empty::before { content: "No trace yet. Press Run."; color: var(--quiet); }
 
 @media (max-width: 1024px) {
-  .hero { grid-template-columns: 1fr; }
   .card-canvas, .card-def, .card-test, .card-step { grid-column: span 12; }
 }
 @media (max-width: 640px) {
-  .nav { grid-template-columns: 1fr; }
-  .hero, main.grid, .nav { width: min(100% - 20px, 1440px); }
-  .title { font-size: clamp(3rem, 18vw, 5rem); }
-  .readout { grid-template-columns: 1fr; }
+  main.grid { width: min(100% - 20px, 1440px); }
   .canvas-legend { position: static; margin: 8px; width: calc(100% - 16px); }
 }
 </style>
@@ -398,10 +302,12 @@ input[type="range"] { width: 100%; accent-color: var(--red); }
         <div class="canvas-legend" aria-label="Canvas legend">
           <span class="ll-init"><i></i>initial</span>
           <span class="ll-final"><i></i>final</span>
-          <span class="ll-active"><i></i>active</span>
+          <span class="ll-active"><i></i>current</span>
+          <span class="ll-accept"><i></i>accept</span>
           <span class="ll-error"><i></i>reject</span>
         </div>
       </div>
+      <div class="edge-ledger" id="edge-ledger" aria-label="Visible transition ledger"></div>
     </div>
   </section>
 
@@ -510,6 +416,7 @@ let animStep = 0;
 let animString = '';
 let animPath = [];
 let animRunning = false;
+let selectedState = '';
 
 const TEST_CASES = [
   { name: 'Default ends in ab', alpha: 'a b', trans: '0 a 1\n0 b 0\n1 a 1\n1 b 2\n2 a 1\n2 b 0', init: '0', finals: '2', str: 'abab', desc: 'Self-loops, bidirectional pair, and backward long edge.' },
@@ -520,7 +427,10 @@ const TEST_CASES = [
   { name: '6 state circle layout', alpha: 'a b', trans: '0 a 1\n1 a 2\n2 a 3\n3 a 4\n4 a 5\n5 a 0\n0 b 3\n3 b 0\n2 b 5\n5 b 2', init: '0', finals: '3', str: 'aaa', desc: 'Circle layout with diametric reverse pairs.' },
   { name: 'Single state self-loop', alpha: 'a', trans: '0 a 0', init: '0', finals: '0', str: 'aaa', desc: 'One-state DFA accepting a-star.' },
   { name: 'Dead state rejection', alpha: 'a b', trans: '0 a 1\n1 b 2', init: '0', finals: '2', str: 'aa', desc: 'Missing transition halts in rejection.' },
-  { name: '12 state user stress', alpha: 'a b', trans: 'q0 a q1\nq1 a q0\nq0 b q6\nq6 b q0\nq1 b q2\nq2 a q3\nq3 b q4\nq4 a q5\nq5 b q6\nq6 a q7\nq7 b q8\nq8 a q9\nq9 b q10\nq10 a q11\nq11 b q0\nq3 a q3\nq7 a q7\nq11 a q11', init: 'q0', finals: 'q3 q7 q11', str: 'ababa', desc: 'User-style names, dense long edges, reverse pairs, and self-loops.' }
+  { name: '12 state user stress', alpha: 'a b', trans: 'q0 a q1\nq1 a q0\nq0 b q6\nq6 b q0\nq1 b q2\nq2 a q3\nq3 b q4\nq4 a q5\nq5 b q6\nq6 a q7\nq7 b q8\nq8 a q9\nq9 b q10\nq10 a q11\nq11 b q0\nq3 a q3\nq7 a q7\nq11 a q11', init: 'q0', finals: 'q3 q7 q11', str: 'ababa', desc: 'User-style names, dense long edges, reverse pairs, and self-loops.' },
+  { name: 'Hard 14 state crossing mesh', alpha: 'a b c', trans: 's0 a s7\ns7 a s0\ns1 a s8\ns8 a s1\ns2 a s9\ns9 a s2\ns3 a s10\ns10 a s3\ns4 a s11\ns11 a s4\ns5 a s12\ns12 a s5\ns6 a s13\ns13 a s6\ns0 b s1\ns1 b s2\ns2 b s3\ns3 b s4\ns4 b s5\ns5 b s6\ns6 b s0\ns7 c s7\ns8 c s8\ns9 c s9\ns10 c s10\ns11 c s11\ns12 c s12\ns13 c s13', init: 's0', finals: 's7 s10 s13', str: 'abac', desc: 'Fourteen named states with diametric reverse pairs, long crossings, ring edges, and self-loops.' },
+  { name: 'Hard dense hub spokes', alpha: 'a b c d', trans: 'hub a n1\nhub b n2\nhub c n3\nhub d n4\nn1 a hub\nn2 b hub\nn3 c hub\nn4 d hub\nn1 b n5\nn5 c n2\nn2 d n6\nn6 a n3\nn3 b n7\nn7 c n4\nn4 a n8\nn8 d n1\nn5 a n5\nn6 b n6\nn7 c n7\nn8 d n8', init: 'hub', finals: 'n5 n6 n7 n8', str: 'abca', desc: 'Hub-and-spoke DFA with many reverse returns, outer cycle chords, and four self-loop states.' },
+  { name: 'Hard parallel reverse labels', alpha: 'a b c d e', trans: 'A a B\nA b B\nA c B\nB a A\nB b A\nB c A\nA d C\nC d A\nB e D\nD e B\nC a E\nE b F\nF c C\nC e C\nD d D\nE e E\nF a F', init: 'A', finals: 'C F', str: 'adabc', desc: 'Merged multi-symbol labels on reverse pairs plus side cycles and self-loops.' }
 ];
 
 function cleanToken(value) { return String(value || '').trim(); }
@@ -547,15 +457,6 @@ function clampPoint(p, margin = EDGE_MARGIN) {
 function pointOnQuadratic(a, c, b, t) {
   const mt = 1 - t;
   return { x: mt * mt * a.x + 2 * mt * t * c.x + t * t * b.x, y: mt * mt * a.y + 2 * mt * t * c.y + t * t * b.y };
-}
-function linePointDistance(p, a, b) {
-  const ab = unit(a, b);
-  const apx = p.x - a.x;
-  const apy = p.y - a.y;
-  const t = clamp(apx * ab.x + apy * ab.y, 0, ab.d);
-  const x = a.x + ab.x * t;
-  const y = a.y + ab.y * t;
-  return Math.hypot(p.x - x, p.y - y);
 }
 
 function resizeCanvas() {
@@ -602,162 +503,415 @@ function buildDFA() {
   log(`build / ${dfa.states.length} states / sigma {${alpha.join(', ') || '-'}}`);
 }
 
-function layoutStates(states) {
-  const w = canvas.width / DPR;
-  const h = canvas.height / DPR;
-  const count = states.length;
-  const positions = {};
-  SR = clamp(Math.floor(Math.min(w, h) / (count > 10 ? 18 : count > 6 ? 15 : 12)), NODE_MIN, NODE_MAX);
-  if (!count) return positions;
-  if (count === 1) {
-    positions[states[0]] = { x: w / 2, y: h / 2 };
-    return positions;
-  }
-  if (count === 2) {
-    states.forEach((state, i) => { positions[state] = { x: w * (0.33 + i * 0.34), y: h / 2 }; });
-    return positions;
-  }
-  if (count === 3 || count === 4) {
-    const cx = w / 2, cy = h / 2;
-    const rx = Math.max(120, w * 0.34), ry = Math.max(86, h * 0.28);
-    const start = count === 3 ? -Math.PI / 2 : -Math.PI * 0.75;
-    states.forEach((state, i) => {
-      const a = start + (Math.PI * 2 * i) / count;
-      positions[state] = { x: clamp(cx + Math.cos(a) * rx, SR + 54, w - SR - 54), y: clamp(cy + Math.sin(a) * ry, SR + 54, h - SR - 54) };
-    });
-    return positions;
-  }
-  const cx = w / 2, cy = h / 2;
-  const rx = Math.max(120, w / 2 - SR - 76), ry = Math.max(108, h / 2 - SR - 72);
-  states.forEach((state, i) => {
-    const a = -Math.PI / 2 + (Math.PI * 2 * i) / count;
-    positions[state] = { x: clamp(cx + Math.cos(a) * rx, SR + 48, w - SR - 48), y: clamp(cy + Math.sin(a) * ry, SR + 48, h - SR - 48) };
-  });
-  return positions;
-}
-
-function buildEdges() {
+function buildGraphModel(model = dfa) {
   const map = new Map();
-  if (!dfa || !dfa.delta) return [];
-  for (const [key, to] of Object.entries(dfa.delta)) {
+  if (!model || !model.delta) return { states: [], edges: [], loops: [], pairs: new Map() };
+  for (const [key, to] of Object.entries(model.delta)) {
     const split = key.indexOf('|');
     if (split < 0) continue;
     const from = key.slice(0, split);
     const sym = key.slice(split + 1);
     if (!from || !sym || !to) continue;
-    if (!dfa.states.includes(from) || !dfa.states.includes(to)) continue;
+    if (!model.states.includes(from) || !model.states.includes(to)) continue;
     const id = edgeId(from, to);
-    if (!map.has(id)) map.set(id, { from, to, symbols: [] });
+    if (!map.has(id)) map.set(id, { id, from, to, symbols: [] });
     map.get(id).symbols.push(sym);
   }
-  return [...map.values()].map(edge => ({ ...edge, label: edge.symbols.sort().join(',') }));
+  const edges = [...map.values()].map(edge => ({ ...edge, label: edge.symbols.sort().join(',') }));
+  const pairs = new Map();
+  for (const edge of edges) {
+    const key = [edge.from, edge.to].sort(sortStates).join('|');
+    if (!pairs.has(key)) pairs.set(key, []);
+    pairs.get(key).push(edge);
+  }
+  return { states: model.states, edges, loops: edges.filter(edge => edge.from === edge.to), pairs };
 }
-function hasReverse(edge, ids) { return edge.from !== edge.to && ids.has(edgeId(edge.to, edge.from)); }
-function hasIntermediateNode(p1, p2, positions, from, to) {
-  return Object.entries(positions).some(([state, p]) => state !== from && state !== to && linePointDistance(p, p1, p2) < SR * 2.15);
+function analyzeGraph(graph) {
+  const degree = Object.fromEntries(graph.states.map(state => [state, 0]));
+  const loopCount = Object.fromEntries(graph.states.map(state => [state, 0]));
+  const reversePairs = new Set();
+  for (const edge of graph.edges) {
+    degree[edge.from] = (degree[edge.from] || 0) + 1;
+    if (edge.from === edge.to) loopCount[edge.from] = (loopCount[edge.from] || 0) + 1;
+    else degree[edge.to] = (degree[edge.to] || 0) + 1;
+    if (edge.from !== edge.to && graph.edges.some(other => other.from === edge.to && other.to === edge.from)) {
+      reversePairs.add([edge.from, edge.to].sort(sortStates).join('|'));
+    }
+  }
+  const hub = graph.states.reduce((best, state) => degree[state] > degree[best] ? state : best, graph.states[0] || '');
+  const density = graph.states.length ? graph.edges.length / graph.states.length : 0;
+  const dense = graph.states.length >= 9 || graph.edges.length > 16 || density > 1.65;
+  return { degree, loopCount, reversePairs, hub, density, dense };
 }
-function routeEdges(edges, positions) {
-  const ids = new Set(edges.map(edge => edgeId(edge.from, edge.to)));
-  return edges.map(edge => {
-    const p1 = positions[edge.from];
-    const p2 = positions[edge.to];
-    if (!p1 || !p2) return null;
-    if (edge.from === edge.to) return routeSelfLoop(edge, p1, positions);
-
+function distributeRow(row, y, w, h, margin) {
+  const positions = {};
+  const denom = Math.max(1, row.length - 1);
+  row.forEach((state, i) => {
+    const x = row.length === 1 ? w / 2 : margin + ((w - margin * 2) * i) / denom;
+    positions[state] = { x: clamp(x, SR + 44, w - SR - 44), y: clamp(y, SR + 54, h - SR - 54) };
+  });
+  return positions;
+}
+function barycenterOrder(states, edges) {
+  const adj = new Map(states.map(s => [s, new Set()]));
+  for (const e of edges) {
+    if (e.from === e.to) continue;
+    adj.get(e.from).add(e.to);
+    adj.get(e.to).add(e.from);
+  }
+  let order = [...states];
+  for (let pass = 0; pass < 18; pass++) {
+    const angle = {};
+    order.forEach((s, i) => angle[s] = (Math.PI * 2 * i) / order.length);
+    const newAngle = {};
+    for (const s of order) {
+      const neighbors = [...adj.get(s)];
+      if (!neighbors.length) { newAngle[s] = angle[s]; continue; }
+      let sx = 0, sy = 0;
+      for (const t of neighbors) { sx += Math.cos(angle[t]); sy += Math.sin(angle[t]); }
+      newAngle[s] = Math.atan2(sy, sx);
+    }
+    order = [...order].sort((a, b) => newAngle[a] - newAngle[b] || sortStates(a, b));
+  }
+  return order;
+}
+function circularLayout(graph, w, h) {
+  const cx = w / 2, cy = h / 2;
+  const n = graph.states.length;
+  let order = barycenterOrder(graph.states, graph.edges);
+  if (dfa && order.includes(dfa.q0)) {
+    const idx = order.indexOf(dfa.q0);
+    order = [...order.slice(idx), ...order.slice(0, idx)];
+  }
+  const minDim = Math.min(w, h);
+  const minSpacing = SR * 2.6;
+  const rNeeded = minSpacing / (2 * Math.sin(Math.PI / Math.max(n, 3)));
+  const rMax = minDim * 0.42 - SR;
+  const r = Math.min(rMax, Math.max(rNeeded, minDim * 0.30));
+  const positions = {};
+  order.forEach((s, i) => {
+    const a = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+    positions[s] = { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+  });
+  return { positions, radius: r };
+}
+function centeredHubLayout(graph, hub, w, h) {
+  const cx = w / 2, cy = h / 2;
+  const outer = graph.states.filter(s => s !== hub);
+  let order = barycenterOrder(outer, graph.edges.filter(e => e.from !== hub && e.to !== hub));
+  if (dfa && order.includes(dfa.q0)) {
+    const idx = order.indexOf(dfa.q0);
+    order = [...order.slice(idx), ...order.slice(0, idx)];
+  }
+  const minDim = Math.min(w, h);
+  const minSpacing = SR * 2.6;
+  const rNeeded = minSpacing / (2 * Math.sin(Math.PI / Math.max(order.length, 3)));
+  const rMax = minDim * 0.43 - SR;
+  const r = Math.min(rMax, Math.max(rNeeded, minDim * 0.34));
+  const positions = { [hub]: { x: cx, y: cy } };
+  order.forEach((s, i) => {
+    const a = -Math.PI / 2 + (Math.PI * 2 * i) / order.length;
+    positions[s] = { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+  });
+  return { positions, radius: r };
+}
+function layoutGraph(graph) {
+  const w = canvas.width / DPR;
+  const h = canvas.height / DPR;
+  const count = graph.states.length;
+  const analysis = analyzeGraph(graph);
+  SR = clamp(Math.floor(Math.min(w, h) / (count > 10 ? 24 : count > 6 ? 18 : 12)), NODE_MIN, NODE_MAX);
+  const center = { x: w / 2, y: h / 2 };
+  if (!count) return { positions: {}, analysis, mode: 'empty', w, h, radius: SR, center };
+  if (count === 1) return { positions: { [graph.states[0]]: { x: w / 2, y: h / 2 } }, analysis, mode: 'single', w, h, radius: SR, center, nodeRadius: SR };
+  if (count === 2) return { positions: distributeRow(graph.states, h / 2, w, h, w * 0.31), analysis, mode: 'pair', w, h, radius: SR, center, nodeRadius: SR };
+  const hubDeg = analysis.degree[analysis.hub];
+  const isHub = count >= 6 && hubDeg >= Math.max(5, Math.floor((count - 1) * 0.6));
+  if (isHub) {
+    const layout = centeredHubLayout(graph, analysis.hub, w, h);
+    return { positions: layout.positions, hub: analysis.hub, ringRadius: layout.radius, analysis, mode: 'hub', w, h, radius: SR, center, nodeRadius: SR };
+  }
+  const layout = circularLayout(graph, w, h);
+  return { positions: layout.positions, ringRadius: layout.radius, analysis, mode: 'circle', w, h, radius: SR, center, nodeRadius: SR };
+}
+function routePointAlong(edge, t) {
+  if (edge.kind === 'straight') return { x: edge.start.x + (edge.end.x - edge.start.x) * t, y: edge.start.y + (edge.end.y - edge.start.y) * t };
+  if (edge.kind === 'curve') return pointOnQuadratic(edge.start, edge.cp, edge.end, t);
+  const mt = 1 - t;
+  return {
+    x: mt * mt * mt * edge.start.x + 3 * mt * mt * t * edge.c1.x + 3 * mt * t * t * edge.c2.x + t * t * t * edge.end.x,
+    y: mt * mt * mt * edge.start.y + 3 * mt * mt * t * edge.c1.y + 3 * mt * t * t * edge.c2.y + t * t * t * edge.end.y,
+  };
+}
+function routeTangent(edge) {
+  if (edge.kind === 'straight') return unit(edge.start, edge.end);
+  if (edge.kind === 'curve') return unit(edge.cp, edge.end);
+  return unit(edge.c2, edge.end);
+}
+function tangentAt(edge, t) {
+  if (edge.kind === 'straight') {
+    const dx = edge.end.x - edge.start.x, dy = edge.end.y - edge.start.y;
+    const d = Math.hypot(dx, dy) || 1;
+    return { x: dx / d, y: dy / d };
+  }
+  if (edge.kind === 'curve') {
+    const dx = 2 * (1 - t) * (edge.cp.x - edge.start.x) + 2 * t * (edge.end.x - edge.cp.x);
+    const dy = 2 * (1 - t) * (edge.cp.y - edge.start.y) + 2 * t * (edge.end.y - edge.cp.y);
+    const d = Math.hypot(dx, dy) || 1;
+    return { x: dx / d, y: dy / d };
+  }
+  const mt = 1 - t;
+  const dx = 3 * mt * mt * (edge.c1.x - edge.start.x) + 6 * mt * t * (edge.c2.x - edge.c1.x) + 3 * t * t * (edge.end.x - edge.c2.x);
+  const dy = 3 * mt * mt * (edge.c1.y - edge.start.y) + 6 * mt * t * (edge.c2.y - edge.c1.y) + 3 * t * t * (edge.end.y - edge.c2.y);
+  const d = Math.hypot(dx, dy) || 1;
+  return { x: dx / d, y: dy / d };
+}
+function pairLane(edge, graph) {
+  const key = [edge.from, edge.to].sort(sortStates).join('|');
+  const group = graph.pairs.get(key) || [edge];
+  const index = group.findIndex(item => item.id === edge.id);
+  return index - (group.length - 1) / 2;
+}
+function routeSelfLoop(edge, p, layout) {
+  const center = layout.center || { x: layout.w / 2, y: layout.h / 2 };
+  let dir;
+  if (Math.abs(p.x - center.x) < 1 && Math.abs(p.y - center.y) < 1) {
+    dir = -Math.PI / 2;
+  } else {
+    dir = Math.atan2(p.y - center.y, p.x - center.x);
+  }
+  const reach = clamp(SR * 3.2, 64, 100);
+  const spread = Math.PI / 4.6;
+  const start = { x: p.x + Math.cos(dir - spread) * SR, y: p.y + Math.sin(dir - spread) * SR };
+  const end = { x: p.x + Math.cos(dir + spread) * SR, y: p.y + Math.sin(dir + spread) * SR };
+  const c1 = { x: p.x + Math.cos(dir - 0.72) * reach, y: p.y + Math.sin(dir - 0.72) * reach };
+  const c2 = { x: p.x + Math.cos(dir + 0.72) * reach, y: p.y + Math.sin(dir + 0.72) * reach };
+  const loopApex = { x: p.x + Math.cos(dir) * reach * 0.95, y: p.y + Math.sin(dir) * reach * 0.95 };
+  return {
+    ...edge, kind: 'self', start, end, c1, c2,
+    normal: { x: Math.cos(dir), y: Math.sin(dir) },
+    angle: Math.atan2(end.y - c2.y, end.x - c2.x),
+    labelPoint: loopApex,
+    labelAngle: 0,
+  };
+}
+function chordLift(layout, p1, p2, sign) {
+  const center = layout.center || { x: layout.w / 2, y: layout.h / 2 };
+  const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  const tcx = center.x - mid.x, tcy = center.y - mid.y;
+  const tcLen = Math.hypot(tcx, tcy);
+  let nx, ny;
+  if (tcLen < 4) {
     const u = unit(p1, p2);
     const n = normalFromUnit(u);
-    const reverse = hasReverse(edge, ids);
-    const blocked = hasIntermediateNode(p1, p2, positions, edge.from, edge.to);
-    const longEdge = u.d > SR * 5;
-
-    if (!reverse && !blocked && !longEdge) {
-      const start = { x: p1.x + u.x * SR, y: p1.y + u.y * SR };
-      const end = { x: p2.x - u.x * SR, y: p2.y - u.y * SR };
-      return { ...edge, kind: 'straight', start, end, labelPoint: clampPoint({ x: (start.x + end.x) / 2 + n.x * 20, y: (start.y + end.y) / 2 + n.y * 20 }, 28), angle: Math.atan2(u.y, u.x) };
-    }
-
-    const id = edgeId(edge.from, edge.to);
-    const reverseId = edgeId(edge.to, edge.from);
-    const sign = id < reverseId ? 1 : -1;
-    const lift = clamp(u.d * (reverse ? 0.30 : 0.22), 46, 178) * sign;
-    const cp = clampPoint({ x: (p1.x + p2.x) / 2 + n.x * lift, y: (p1.y + p2.y) / 2 + n.y * lift }, 34);
-    const t = clamp(SR / u.d, 0.05, 0.34);
-    const start = pointOnQuadratic(p1, cp, p2, t);
-    const end = pointOnQuadratic(p1, cp, p2, 1 - t);
-    const labelPoint = clampPoint(pointOnQuadratic(p1, cp, p2, 0.5), 34);
-    const tangent = { x: p2.x - cp.x, y: p2.y - cp.y };
-    return { ...edge, kind: 'curve', start, end, cp, labelPoint, angle: Math.atan2(tangent.y, tangent.x) };
-  }).filter(Boolean);
-}
-function routeSelfLoop(edge, p, positions) {
-  const w = canvas.width / DPR, h = canvas.height / DPR;
-  const cx = w / 2, cy = h / 2;
-  let theta = Math.atan2(p.y - cy, p.x - cx);
-  if (!Number.isFinite(theta) || Math.hypot(p.x - cx, p.y - cy) < 4) theta = -Math.PI / 2;
-  const candidates = [theta, -Math.PI / 2, 0, Math.PI, Math.PI / 2];
-  let best = candidates[0], bestScore = -Infinity;
-  for (const a of candidates) {
-    const probe = { x: p.x + Math.cos(a) * SR * 3.2, y: p.y + Math.sin(a) * SR * 3.2 };
-    const edgeScore = Math.min(probe.x, probe.y, w - probe.x, h - probe.y);
-    const neighborDistances = Object.values(positions).filter(q => q !== p).map(q => dist(probe, q));
-    const neighborScore = neighborDistances.length ? Math.min(...neighborDistances) : 999;
-    const score = edgeScore + neighborScore;
-    if (score > bestScore) { bestScore = score; best = a; }
+    nx = n.x; ny = n.y;
+  } else {
+    nx = tcx / tcLen; ny = tcy / tcLen;
   }
-  const spread = Math.PI / 5;
-  const start = { x: p.x + Math.cos(best - spread) * SR, y: p.y + Math.sin(best - spread) * SR };
-  const end = { x: p.x + Math.cos(best + spread) * SR, y: p.y + Math.sin(best + spread) * SR };
-  const c1 = { x: p.x + Math.cos(best - 0.72) * SR * 3.1, y: p.y + Math.sin(best - 0.72) * SR * 3.1 };
-  const c2 = { x: p.x + Math.cos(best + 0.72) * SR * 3.1, y: p.y + Math.sin(best + 0.72) * SR * 3.1 };
-  const labelPoint = clampPoint({ x: p.x + Math.cos(best) * SR * 2.85, y: p.y + Math.sin(best) * SR * 2.85 }, 34);
-  const tangent = { x: end.x - c2.x, y: end.y - c2.y };
-  return { ...edge, kind: 'self', start, end, c1, c2, labelPoint, angle: Math.atan2(tangent.y, tangent.x) };
+  return { nx: nx * sign, ny: ny * sign };
 }
-
-function drawCanvasGrid() {
-  const w = canvas.width / DPR, h = canvas.height / DPR;
+function routeEdge(edge, graph, layout) {
+  const p1 = layout.positions[edge.from];
+  const p2 = layout.positions[edge.to];
+  if (!p1 || !p2) return null;
+  if (edge.from === edge.to) return routeSelfLoop(edge, p1, layout);
+  const u = unit(p1, p2);
+  const n = normalFromUnit(u);
+  const lane = pairLane(edge, graph);
+  const reverse = Math.abs(lane) > 0 || graph.edges.some(other => other.from === edge.to && other.to === edge.from);
+  const sign = lane || (edge.id < edgeId(edge.to, edge.from) ? 1 : -1);
+  const center = layout.center || { x: layout.w / 2, y: layout.h / 2 };
+  const isHubMode = layout.mode === 'hub';
+  const involvesHub = isHubMode && (edge.from === layout.hub || edge.to === layout.hub);
+  const a1 = Math.atan2(p1.y - center.y, p1.x - center.x);
+  const a2 = Math.atan2(p2.y - center.y, p2.x - center.x);
+  let arc = Math.abs(a2 - a1);
+  if (arc > Math.PI) arc = Math.PI * 2 - arc;
+  const adjacency = arc / Math.PI;
+  const start = { x: p1.x + u.x * SR, y: p1.y + u.y * SR };
+  const end = { x: p2.x - u.x * SR, y: p2.y - u.y * SR };
+  if (!reverse && (involvesHub || adjacency < 0.18)) {
+    const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    return { ...edge, kind: 'straight', start, end, normal: n, angle: Math.atan2(u.y, u.x), labelPoint: mid, labelAngle: Math.atan2(u.y, u.x) };
+  }
+  let liftDir;
+  if (involvesHub) {
+    liftDir = { nx: n.x * sign, ny: n.y * sign };
+  } else {
+    liftDir = chordLift(layout, p1, p2, reverse ? sign : 1);
+  }
+  const baseLift = u.d * 0.18 + adjacency * 90 + (reverse ? 22 : 0);
+  const lift = baseLift;
+  const cpRaw = { x: (p1.x + p2.x) / 2 + liftDir.nx * lift, y: (p1.y + p2.y) / 2 + liftDir.ny * lift };
+  const cp = clampPoint(cpRaw, 36);
+  const onCurve = pointOnQuadratic(start, cp, end, 0.5);
+  const tan = tangentAt({ kind: 'curve', start, cp, end }, 0.5);
+  return {
+    ...edge, kind: 'curve', start, end, cp,
+    normal: n, angle: Math.atan2(end.y - cp.y, end.x - cp.x),
+    labelPoint: onCurve, labelAngle: Math.atan2(tan.y, tan.x),
+  };
+}
+function routeGraphEdges(graph, layout) {
+  return graph.edges.map(edge => routeEdge(edge, graph, layout)).filter(Boolean);
+}
+function edgeVisible(edge, layout) {
+  if (!layout.analysis.dense) return true;
+  if (highlightEdge && edge.from === highlightEdge.from && edge.to === highlightEdge.to && edge.symbols.includes(highlightEdge.sym)) return true;
+  if (selectedState && (edge.from === selectedState || edge.to === selectedState)) return true;
+  if (edge.from === edge.to && (edge.from === highlightState || edge.from === dfa.q0)) return true;
+  return edge.from !== edge.to && edge.symbols.length > 1;
+}
+function edgeLabelVisible(edge, layout) {
+  if (highlightEdge && edge.from === highlightEdge.from && edge.to === highlightEdge.to && edge.symbols.includes(highlightEdge.sym)) return true;
+  if (!layout.analysis.dense) return true;
+  return selectedState && (edge.from === selectedState || edge.to === selectedState);
+}
+function placeEdgeLabels(routes, layout) {
+  const dense = layout.analysis.dense || routes.length > 18;
+  for (const route of routes) {
+    route.labelFont = dense ? 10 : 12;
+    route.visible = edgeVisible(route, layout);
+    route.showLabel = edgeLabelVisible(route, layout);
+  }
+  return routes;
+}
+function edgeLabelText(edge) {
+  return `${stateLabel(edge.from)} --${edge.label}--> ${stateLabel(edge.to)}`;
+}
+function renderEdgeLedger(routes, layout) {
+  const ledger = document.getElementById('edge-ledger');
+  if (!ledger) return;
+  const visible = routes.filter(edge => edge.visible || edge.showLabel);
+  if (!layout.analysis.dense || visible.length === routes.length) {
+    ledger.innerHTML = '';
+    return;
+  }
+  ledger.innerHTML = visible.map(edge => {
+    const live = highlightEdge && edge.from === highlightEdge.from && edge.to === highlightEdge.to && edge.symbols.includes(highlightEdge.sym);
+    const cls = `edge-item${live ? ' live' : ''}${edge.from === edge.to ? ' self' : ''}`;
+    return `<div class="${cls}"><strong>${stateLabel(edge.from)}</strong> --${edge.label}--> <strong>${stateLabel(edge.to)}</strong></div>`;
+  }).join('');
+}
+function measureLabel(text, fontSize = 12) {
   ctx.save();
-  ctx.fillStyle = '#050505';
+  ctx.font = `800 ${fontSize}px JetBrains Mono, monospace`;
+  const w = Math.ceil(ctx.measureText(text).width) + 8;
+  ctx.restore();
+  return { w, h: fontSize + 6 };
+}
+function drawCanvasGrid() {
+  const w = canvas.width / DPR;
+  const h = canvas.height / DPR;
+  ctx.save();
+  ctx.fillStyle = '#080909';
   ctx.fillRect(0, 0, w, h);
   ctx.strokeStyle = 'rgba(234,234,234,0.055)';
   ctx.lineWidth = 1;
-  for (let x = 0; x <= w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-  for (let y = 0; y <= h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
-  ctx.strokeStyle = 'rgba(230,25,25,0.22)';
-  ctx.strokeRect(16, 16, Math.max(0, w - 32), Math.max(0, h - 32));
+  for (let x = 0; x <= w; x += 32) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= h; y += 32) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(234,234,234,0.08)';
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
   ctx.restore();
 }
 function drawHead(x, y, angle, color) {
+  const size = 11;
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
+  ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(0, 0);
-  ctx.lineTo(-13, -6);
-  ctx.lineTo(-9, 0);
-  ctx.lineTo(-13, 6);
+  ctx.lineTo(-size, -size * 0.48);
+  ctx.lineTo(-size * 0.62, 0);
+  ctx.lineTo(-size, size * 0.48);
   ctx.closePath();
-  ctx.fillStyle = color;
   ctx.fill();
   ctx.restore();
 }
-function drawLabel(x, y, text, color) {
+function drawLabel(x, y, text, color, fontSize = 12, angle = 0) {
+  const size = measureLabel(text, fontSize);
+  let a = angle;
+  if (a > Math.PI / 2) a -= Math.PI;
+  else if (a < -Math.PI / 2) a += Math.PI;
+  const isActive = color === '#4af626' || color === '#f5c518';
   ctx.save();
-  ctx.font = '700 12px JetBrains Mono, IBM Plex Mono, monospace';
+  ctx.translate(x, y);
+  ctx.rotate(a);
+  ctx.font = `800 ${fontSize}px JetBrains Mono, monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = '#0a0a0a';
-  ctx.strokeText(text, x, y);
+  ctx.fillStyle = '#080909';
+  ctx.fillRect(-size.w / 2, -size.h / 2, size.w, size.h);
+  ctx.strokeStyle = isActive ? color : 'rgba(234,234,234,0.32)';
+  ctx.lineWidth = isActive ? 1.4 : 1;
+  ctx.strokeRect(-size.w / 2 + 0.5, -size.h / 2 + 0.5, size.w - 1, size.h - 1);
   ctx.fillStyle = color;
-  ctx.fillText(text, x, y);
+  ctx.fillText(text, 0, 0);
   ctx.restore();
 }
-function drawRoutedEdge(edge, color) {
+function drawState(s, p) {
+  if (!p) return;
+  const isInitial = s === dfa.q0;
+  const isFinal = dfa.finals.has(s);
+  const isActive = s === highlightState;
+  const isAccepted = s === acceptedFinalState;
+  const isRejected = s === rejectedState;
+  let stroke = 'rgba(234,234,234,0.76)';
+  let fill = '#0c0d0d';
+  let text = '#eaeaea';
+  if (isActive) { stroke = '#f5c518'; fill = 'rgba(245,197,24,0.14)'; text = '#f5c518'; }
+  if (isAccepted) { stroke = '#4af626'; fill = 'rgba(74,246,38,0.16)'; text = '#4af626'; }
+  if (isRejected) { stroke = '#e61919'; fill = 'rgba(230,25,25,0.18)'; text = '#ff6b6b'; }
+
+  ctx.save();
+  if (isInitial) {
+    ctx.strokeStyle = 'rgba(234,234,234,0.72)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(p.x - SR - 34, p.y);
+    ctx.lineTo(p.x - SR - 8, p.y);
+    ctx.stroke();
+    drawHead(p.x - SR - 8, p.y, 0, 'rgba(234,234,234,0.72)');
+  }
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = isActive || isAccepted || isRejected ? 2.8 : 1.8;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, SR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  if (isFinal) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, SR - 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.font = `900 ${SR > 24 ? 13 : 11}px JetBrains Mono, monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#080909';
+  ctx.strokeText(stateLabel(s), p.x, p.y);
+  ctx.fillStyle = text;
+  ctx.fillText(stateLabel(s), p.x, p.y);
+  ctx.restore();
+}
+function drawRoutedEdge(edge, color, labels = true, ghost = false) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.lineWidth = color === '#4af626' ? 3 : 2;
+  ctx.lineWidth = (color === '#4af626' || color === '#f5c518') ? 3 : ghost ? 0.8 : 1.6;
+  ctx.globalAlpha = ghost ? 0.28 : 1;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
@@ -772,67 +926,42 @@ function drawRoutedEdge(edge, color) {
     ctx.bezierCurveTo(edge.c1.x, edge.c1.y, edge.c2.x, edge.c2.y, edge.end.x, edge.end.y);
   }
   ctx.stroke();
-  drawHead(edge.end.x, edge.end.y, edge.angle, color);
-  drawLabel(edge.labelPoint.x, edge.labelPoint.y, edge.label, color);
-  ctx.restore();
-}
-function drawState(s, p) {
-  if (!p) return;
-  const isFinal = dfa.finals.has(s);
-  const isStart = s === dfa.q0;
-  const isCurrent = highlightState === s && !acceptedFinalState && !rejectedState;
-  const isAccepted = acceptedFinalState === s;
-  const isRejected = rejectedState === s;
-  let stroke = '#eaeaea';
-  if (isCurrent || isAccepted) stroke = '#4af626';
-  if (isRejected) stroke = '#e61919';
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, SR, 0, Math.PI * 2);
-  ctx.fillStyle = '#111111';
-  ctx.fill();
-  ctx.lineWidth = isCurrent || isAccepted || isRejected ? 4 : 2;
-  ctx.strokeStyle = stroke;
-  ctx.stroke();
-  if (isFinal) {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, SR - 6, 0, Math.PI * 2);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = stroke;
-    ctx.stroke();
-  }
-  if (isStart) {
-    ctx.beginPath();
-    ctx.moveTo(p.x - SR - 28, p.y);
-    ctx.lineTo(p.x - SR - 6, p.y);
-    ctx.strokeStyle = '#e61919';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    drawHead(p.x - SR - 6, p.y, 0, '#e61919');
-  }
-  ctx.font = '800 12px JetBrains Mono, IBM Plex Mono, monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = '#111111';
-  ctx.strokeText(stateLabel(s), p.x, p.y);
-  ctx.fillStyle = '#eaeaea';
-  ctx.fillText(stateLabel(s), p.x, p.y);
+  if (!ghost) drawHead(edge.end.x, edge.end.y, edge.angle, color);
+  ctx.globalAlpha = 1;
+  if (labels && edge.showLabel) drawLabel(edge.labelPoint.x, edge.labelPoint.y, edge.label, color, edge.labelFont || 12, edge.labelAngle || 0);
   ctx.restore();
 }
 function drawDFA() {
   ctx.clearRect(0, 0, canvas.width / DPR, canvas.height / DPR);
   drawCanvasGrid();
   if (!dfa || !Array.isArray(dfa.states) || !dfa.delta) return;
-  statePos = layoutStates(dfa.states);
-  const routedEdges = routeEdges(buildEdges(), statePos);
+  const graph = buildGraphModel(dfa);
+  const layout = layoutGraph(graph);
+  statePos = layout.positions;
+  window.statePos = statePos;
+  window.layoutMode = layout.mode;
+  const routedEdges = placeEdgeLabels(routeGraphEdges(graph, layout), layout);
+  window.routedEdges = routedEdges;
+  const normalEdges = [];
+  let activeEdge = null;
   for (const edge of routedEdges) {
-    let color = 'rgba(234,234,234,0.62)';
-    if (highlightEdge && edge.from === highlightEdge.from && edge.to === highlightEdge.to && edge.symbols.includes(highlightEdge.sym)) color = '#4af626';
-    drawRoutedEdge(edge, color);
+    if (highlightEdge && edge.from === highlightEdge.from && edge.to === highlightEdge.to && edge.symbols.includes(highlightEdge.sym)) activeEdge = edge;
+    else normalEdges.push(edge);
+  }
+  for (const edge of normalEdges) {
+    if (edge.visible) drawRoutedEdge(edge, 'rgba(234,234,234,0.45)', false);
+    else drawRoutedEdge(edge, 'rgba(234,234,234,0.24)', false, true);
   }
   for (const state of dfa.states) drawState(state, statePos[state]);
+  for (const edge of normalEdges) {
+    if (edge.showLabel) drawLabel(edge.labelPoint.x, edge.labelPoint.y, edge.label, 'rgba(234,234,234,0.94)', edge.labelFont || 12, edge.labelAngle || 0);
+  }
+  if (activeEdge) {
+    activeEdge.visible = true;
+    activeEdge.showLabel = true;
+    drawRoutedEdge(activeEdge, acceptedFinalState ? '#4af626' : '#f5c518', true);
+  }
+  renderEdgeLedger(routedEdges, layout);
 }
 
 function updateChips() {
@@ -901,6 +1030,7 @@ function scheduleNext() {
 }
 function applyStep(entry) {
   if (entry.dead) {
+    selectedState = entry.from;
     highlightState = entry.from;
     rejectedState = entry.from;
     highlightEdge = null;
@@ -910,6 +1040,7 @@ function applyStep(entry) {
     drawDFA();
     return false;
   }
+  selectedState = entry.state;
   highlightState = entry.state;
   rejectedState = '';
   highlightEdge = entry.sym ? { from: entry.from, sym: entry.sym, to: entry.state } : null;
@@ -954,11 +1085,13 @@ function finishAnim() {
   const accepted = dfa.finals.has(last.state);
   if (accepted) {
     acceptedFinalState = last.state;
+    selectedState = last.state;
     highlightState = '';
     document.getElementById('msg').innerHTML = `<span class="accept">Accepted. Ended in final state ${stateLabel(last.state)}.</span>`;
     log(`accepted / ${stateLabel(last.state)}`);
     setCanvasMeta(`${stateLabel(last.state)} / accepted`, true);
   } else {
+    selectedState = last.state;
     highlightState = last.state;
     rejectedState = last.state;
     document.getElementById('msg').innerHTML = `<span class="reject">Rejected. Ended in non-final state ${stateLabel(last.state)}.</span>`;
@@ -975,6 +1108,7 @@ function resetAnim(redraw = true) {
   animString = '';
   acceptedFinalState = '';
   rejectedState = '';
+  selectedState = dfa ? dfa.q0 : '';
   highlightState = dfa ? dfa.q0 : '';
   highlightEdge = null;
   document.getElementById('sym-row').innerHTML = '';
@@ -1011,6 +1145,21 @@ function loadExample() { loadTestCase(0); }
 
 document.getElementById('speed').addEventListener('input', function () {
   document.getElementById('speed-val').textContent = this.value + 'ms';
+});
+canvas.addEventListener('click', function (event) {
+  if (!dfa) return;
+  const rect = canvas.getBoundingClientRect();
+  const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  let nearest = '';
+  let nearestDist = Infinity;
+  for (const [state, pos] of Object.entries(statePos)) {
+    const d = Math.hypot(point.x - pos.x, point.y - pos.y);
+    if (d < nearestDist) { nearest = state; nearestDist = d; }
+  }
+  if (nearest && nearestDist <= SR + 10) {
+    selectedState = selectedState === nearest ? '' : nearest;
+    drawDFA();
+  }
 });
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();

@@ -3,7 +3,8 @@ You are an orchestrator
 # PROJECT OVERVIEW
 This project is to aim and address C:\Users\admin\automata\resources\GOAL.md
 
-!! Do not use subagents. Controlled inline flow only !!
+!! DO NOTE USE MORE THAN **THREE** subagents !!
+
 Always say "Aye" in the beginning to confirm you got the task. 
 ## Claude Rules For This Repo
 - Always use /caveman:caveman ultra and  /karpathy-guidelines for this project. These precede all other instructions I make. Adhere strictly to karpathy-guidelines.  

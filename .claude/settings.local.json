@@ -3,7 +3,10 @@
     "allow": [
       "PowerShell(& \"C:\\\\msys64\\\\ucrt64\\\\bin\\\\g++.exe\" --version)",
       "PowerShell(Get-Command *)",
-      "PowerShell(Test-Path *)"
+      "PowerShell(Test-Path *)",
+      "mcp__openpets__openpets_say",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_upgrade"
     ]
   },
   "skillOverrides": {
@@ -37,6 +40,6 @@
     "stitch-design-taste": "name-only",
     "validate-and-fix": "name-only"
   },
-  "spinnerTipsEnabled": false,
+  "spinnerTipsEnabled": true,
   "prefersReducedMotion": false
 }

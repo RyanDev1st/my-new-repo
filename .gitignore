@@ -1,0 +1,16 @@
+
+# Ignore everything by default
+/*
+
+# Do not ignore this .gitignore
+!.gitignore
+
+# Keep the src and resources directories and their contents
+!/src/
+!/src/**
+!/resources/
+!/resources/**
+
+# Optionally allow top-level README or other important files
+!README.md
+!README
