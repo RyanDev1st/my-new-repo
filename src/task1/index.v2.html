@@ -19,7 +19,11 @@
       --accept: #28724f;
       --reject: #9a3a30;
       --panel: #fffdf8;
-      --shadow: 0 18px 40px rgba(61, 49, 35, 0.12);
+      --shadow:
+        0 1px 1px rgba(50, 40, 28, 0.04),
+        0 6px 14px -4px rgba(50, 40, 28, 0.08),
+        0 24px 48px -16px rgba(50, 40, 28, 0.16),
+        0 48px 80px -32px rgba(50, 40, 28, 0.20);
       font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
@@ -28,14 +32,21 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--paper);
       color: var(--ink);
+      background-color: #ece4d2;
+      background-image:
+        radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255, 253, 246, 0.85), transparent 60%),
+        linear-gradient(180deg, #ede5d4 0%, #e6dcc6 100%);
+      background-attachment: fixed;
+      position: relative;
     }
 
     main {
       width: min(1320px, calc(100vw - 32px));
       margin: 0 auto;
       padding: 28px 0 34px;
+      position: relative;
+      z-index: 1;
     }
 
     header {
@@ -132,18 +143,10 @@
 
     .graph-wrap {
       position: relative;
-      background:
-        radial-gradient(circle at 1px 1px, rgba(38, 35, 31, 0.15) 1px, transparent 0),
-        linear-gradient(rgba(38, 35, 31, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(38, 35, 31, 0.06) 1px, transparent 1px),
-        linear-gradient(rgba(38, 35, 31, 0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(38, 35, 31, 0.025) 1px, transparent 1px),
-        #fffdf8;
-      background-size: 20px 20px, 100px 100px, 100px 100px, 20px 20px, 20px 20px, auto;
-      background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+      background: #fffdf8;
       min-height: 680px;
       overflow: hidden;
-      cursor: grab;
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'><path d='M5 11.5 V8 a2 2 0 0 1 4 0 V6 a2 2 0 0 1 4 0 V7 a2 2 0 0 1 4 0 v6 a5 5 0 0 1 -5 5 H9 a4 4 0 0 1 -3-1.5 L3 13 a1.4 1.4 0 0 1 2-2 z' fill='%23fffdf8' stroke='%23262320' stroke-width='1.4' stroke-linejoin='round'/></svg>") 8 6, grab;
     }
 
     .graph-wrap::after {
@@ -154,7 +157,16 @@
       pointer-events: none;
     }
 
-    .graph-wrap.dragging { cursor: grabbing; }
+    .graph-wrap.dragging {
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'><path d='M5 11 V8 a1.7 1.7 0 0 1 3.4 0 V9 a1.7 1.7 0 0 1 3.4 0 V9 a1.7 1.7 0 0 1 3.4 0 v5 a5 5 0 0 1 -5 5 H9 a4 4 0 0 1 -3-1.5 L3 13 a1.4 1.4 0 0 1 2-2 z' fill='%23262320' stroke='%23fffdf8' stroke-width='1.4' stroke-linejoin='round'/></svg>") 8 6, grabbing;
+    }
+
+    .graph-wrap svg,
+    .graph-wrap svg text,
+    .graph-wrap svg path,
+    .graph-wrap svg circle,
+    .graph-wrap svg line,
+    .graph-wrap svg g { cursor: inherit; }
 
     svg {
       display: block;
@@ -164,6 +176,20 @@
       touch-action: none;
       position: relative;
       z-index: 1;
+    }
+
+    .grid-line {
+      stroke: rgba(38, 35, 31, 0.08);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+
+    .grid-line.major { stroke: rgba(38, 35, 31, 0.16); }
+
+    .grid-dot {
+      fill: rgba(38, 35, 31, 0.16);
+      pointer-events: none;
     }
 
     .edge-path {
@@ -178,14 +204,14 @@
     .edge-label-halo {
       fill: none;
       stroke: #fffdf8;
-      stroke-width: 7px;
+      stroke-width: 9px;
       stroke-linejoin: round;
       paint-order: stroke;
     }
 
     .edge-label {
       fill: var(--ink);
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 760;
       letter-spacing: -0.02em;
       text-anchor: middle;
@@ -199,10 +225,27 @@
     .edge.dim .edge-label-halo { opacity: 0.18; }
     .edge.highlight .edge-path { stroke: var(--focus); opacity: 1; stroke-width: 4.6; }
     .edge.highlight .edge-label { fill: var(--focus); opacity: 1; }
-    .edge.active .edge-path { stroke: var(--focus); opacity: 1; stroke-width: 5.2; }
-    .edge.active .edge-label { fill: var(--focus); opacity: 1; }
+    .edge.active .edge-path {
+      stroke: var(--focus);
+      opacity: 1;
+      stroke-width: 5.6;
+      stroke-dasharray: 14 8;
+      marker-end: none;
+      filter: drop-shadow(0 0 6px rgba(180, 122, 52, 0.45));
+      animation: dash-flow 700ms linear infinite;
+    }
+    .edge.active .edge-label {
+      fill: var(--focus);
+      opacity: 1;
+      font-size: 17px;
+    }
 
-    .node { cursor: pointer; }
+    @keyframes dash-flow {
+      to { stroke-dashoffset: -44; }
+    }
+
+    .node,
+    .node * { cursor: move !important; }
 
     .node-ring {
       fill: var(--state);
@@ -243,19 +286,98 @@
       stroke-width: 4.5;
     }
 
+    .node-ring { transform-box: fill-box; transform-origin: center; }
+
+    .node.reading .node-ring {
+      fill: #ffe9c7;
+      stroke: var(--focus);
+      stroke-width: 5;
+      animation: ring-pulse 720ms ease-in-out infinite;
+    }
+
+    .node.target .node-ring {
+      stroke: var(--focus);
+      stroke-width: 4;
+      stroke-dasharray: 6 5;
+      animation: target-pulse 720ms ease-in-out infinite;
+    }
+
     .node.accepted .node-ring {
       fill: #e9f5ed;
       stroke: var(--accept);
-      stroke-width: 4.5;
+      stroke-width: 5;
+      filter: drop-shadow(0 0 14px rgba(40, 114, 79, 0.55));
     }
 
     .node.rejected .node-ring {
       fill: #f9e9e6;
       stroke: var(--reject);
-      stroke-width: 4.5;
+      stroke-width: 5;
+      filter: drop-shadow(0 0 12px rgba(154, 58, 48, 0.5));
+    }
+
+    .node.accepted {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: accept-burst 760ms cubic-bezier(0.22, 0.9, 0.32, 1);
+    }
+
+    .node.rejected {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: reject-shake 500ms ease-in-out;
     }
 
     .node.dim { opacity: 0.55; }
+
+    @keyframes ring-pulse {
+      0%   { stroke-width: 4; filter: drop-shadow(0 0 0 rgba(180, 122, 52, 0)); }
+      50%  { stroke-width: 6.4; filter: drop-shadow(0 0 14px rgba(180, 122, 52, 0.6)); }
+      100% { stroke-width: 4; filter: drop-shadow(0 0 0 rgba(180, 122, 52, 0)); }
+    }
+
+    @keyframes target-pulse {
+      0%   { stroke-width: 3; opacity: 0.6; }
+      50%  { stroke-width: 5; opacity: 1; }
+      100% { stroke-width: 3; opacity: 0.6; }
+    }
+
+    @keyframes accept-burst {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.16); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes reject-shake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(3px); }
+    }
+
+    .travel-dot {
+      fill: var(--focus);
+      stroke: #fffdf8;
+      stroke-width: 2.5;
+      filter: drop-shadow(0 0 9px rgba(180, 122, 52, 0.75));
+      pointer-events: none;
+    }
+
+    .travel-trail {
+      fill: var(--focus);
+      opacity: 0.32;
+      pointer-events: none;
+    }
+
+    .travel-arrow {
+      fill: var(--focus);
+      stroke: #fffdf8;
+      stroke-width: 1.4;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 6px rgba(180, 122, 52, 0.7));
+      pointer-events: none;
+    }
 
     .start-arrow {
       fill: none;
@@ -331,6 +453,35 @@
       margin: 12px 0 15px;
     }
 
+    .speed-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin: -4px 0 14px;
+    }
+
+    .speed-row label {
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+
+    .speed-row input[type="range"] {
+      width: 100%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      accent-color: var(--focus);
+    }
+
+    .speed-value {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      min-width: 92px;
+      text-align: right;
+    }
+
     .preset-status {
       margin-top: -6px;
       margin-bottom: 12px;
@@ -402,6 +553,69 @@
     }
 
     .token.done { border-color: var(--focus); color: var(--focus); background: #fff5df; }
+
+    .token.now {
+      border-color: var(--focus);
+      background: var(--focus);
+      color: #fffdf8;
+      animation: token-pulse 720ms ease-in-out infinite;
+      box-shadow: 0 0 0 2px rgba(180, 122, 52, 0.18);
+    }
+
+    @keyframes token-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(180, 122, 52, 0.55); }
+      50%      { transform: scale(1.22); box-shadow: 0 0 0 8px rgba(180, 122, 52, 0); }
+    }
+
+    .step-meter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .step-meter .step-track {
+      flex: 1;
+      height: 5px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .step-meter .step-fill {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--focus);
+      border-radius: inherit;
+      transition: width 220ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .symbol-pill {
+      display: inline-block;
+      background: var(--focus);
+      color: #fffdf8;
+      border-radius: 999px;
+      padding: 1px 9px;
+      margin: 0 2px;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+
+    .state-tag {
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .arrow-glyph { color: var(--focus); font-weight: 900; padding: 0 3px; }
 
     .rule-list {
       display: grid;
@@ -478,9 +692,11 @@
               </marker>
             </defs>
             <g id="viewport">
+              <g id="grid-layer"></g>
               <g id="edges"></g>
               <g id="start-layer"></g>
               <g id="nodes"></g>
+              <g id="travel-layer" aria-hidden="true"></g>
             </g>
           </svg>
         </div>
@@ -495,9 +711,18 @@
           <button id="run">Run</button>
           <button id="reset" class="secondary">Reset</button>
         </div>
+        <div class="speed-row">
+          <label for="run-speed">Speed</label>
+          <input id="run-speed" type="range" min="100" max="2000" step="20" value="720" aria-describedby="run-speed-value">
+          <span id="run-speed-value" class="speed-value">720 ms / symbol</span>
+        </div>
         <div class="status" aria-live="polite">
           <p id="status-title" class="status-title">Ready at q0</p>
           <p id="status-text" class="status-text">This DFA accepts strings that contain substring <strong>abb</strong>.</p>
+          <div class="step-meter">
+            <span id="step-meter-text">Step 0 / 0</span>
+            <span class="step-track"><span id="step-meter-fill" class="step-fill"></span></span>
+          </div>
           <div id="trace" class="trace"></div>
         </div>
 
@@ -524,6 +749,7 @@
   <script>
     const NS = 'http://www.w3.org/2000/svg';
     const R = 42;
+    const SYMBOL_JOIN = ' · ';
     const PRESETS = [
       {
         id: 'easy-abb',
@@ -696,9 +922,11 @@ q11 b q11`
     const graph = document.getElementById('graph');
     const graphWrap = document.getElementById('graph-wrap');
     const viewport = document.getElementById('viewport');
+    const gridLayer = document.getElementById('grid-layer');
     const edgeLayer = document.getElementById('edges');
     const startLayer = document.getElementById('start-layer');
     const nodeLayer = document.getElementById('nodes');
+    const travelLayer = document.getElementById('travel-layer');
     const input = document.getElementById('input');
     const runButton = document.getElementById('run');
     const resetButton = document.getElementById('reset');
@@ -719,6 +947,10 @@ q11 b q11`
     const alphabetBadge = document.getElementById('alphabet-badge');
     const startBadge = document.getElementById('start-badge');
     const acceptBadge = document.getElementById('accept-badge');
+    const runSpeed = document.getElementById('run-speed');
+    const runSpeedValue = document.getElementById('run-speed-value');
+    const stepMeterText = document.getElementById('step-meter-text');
+    const stepMeterFill = document.getElementById('step-meter-fill');
 
     let model = null;
     let states = [];
@@ -731,6 +963,48 @@ q11 b q11`
     let runToken = 0;
     let view = { x: 0, y: 0, scale: 1 };
     let drag = null;
+    let nodeDrag = null;
+    let graphBounds = { width: 900, height: 680 };
+    let readingFromState = null;
+    let readingToState = null;
+    let activeSymbolIndex = -1;
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function svgPoint(event) {
+      const ctm = viewport.getScreenCTM();
+      if (!ctm) return { x: event.clientX, y: event.clientY };
+      const pt = graph.createSVGPoint();
+      pt.x = event.clientX;
+      pt.y = event.clientY;
+      const local = pt.matrixTransform(ctm.inverse());
+      return { x: local.x, y: local.y };
+    }
+
+    function rerouteAndRedrawEdges() {
+      edges = buildEdges(model, states);
+      renderEdges();
+      renderStartArrow();
+      applyViewState();
+      window.routedEdges = edges;
+    }
+
+    function moveNodeDom(state) {
+      const group = nodeLayer.querySelector(`.node[data-state="${state.id}"]`);
+      if (!group) return;
+      group.querySelectorAll('circle').forEach(c => { c.setAttribute('cx', state.x); c.setAttribute('cy', state.y); });
+      const label = group.querySelector('.node-label');
+      if (label) { label.setAttribute('x', state.x); label.setAttribute('y', state.y - 6); }
+      const sub = group.querySelector('.node-sub');
+      if (sub) { sub.setAttribute('x', state.x); sub.setAttribute('y', state.y + 17); }
+    }
 
     function currentPreset() {
       return PRESETS.find(preset => preset.id === presetSelect.value) || PRESETS[0];
@@ -807,26 +1081,44 @@ q11 b q11`
     function layoutStates(parsed) {
       const ordered = sortStates(parsed.states);
       const count = ordered.length;
-      const width = Math.max(900, count * 135);
-      const height = Math.max(680, Math.ceil(count / 8) * 260 + 360);
-      const cx = width / 2;
-      const cy = height / 2;
-      const rx = Math.max(260, width / 2 - 130);
-      const ry = Math.max(220, height / 2 - 130);
-
-      if (count === 1) {
-        return [{ id: ordered[0], x: cx, y: cy, note: noteFor(ordered[0], parsed), final: parsed.finals.has(ordered[0]) }];
+      const rank = new Map([[parsed.start, 0]]);
+      const queue = [parsed.start];
+      for (let index = 0; index < queue.length; index += 1) {
+        const from = queue[index];
+        parsed.alphabet.forEach(symbol => {
+          const to = parsed.delta[from][symbol];
+          if (!rank.has(to)) {
+            rank.set(to, rank.get(from) + 1);
+            queue.push(to);
+          }
+        });
       }
+      ordered.forEach(state => {
+        if (!rank.has(state)) rank.set(state, Math.max(1, ...rank.values()) + 1);
+      });
 
-      return ordered.map((id, index) => {
-        const angle = -Math.PI / 2 + (2 * Math.PI * index) / count;
-        return {
-          id,
-          x: cx + Math.cos(angle) * rx,
-          y: cy + Math.sin(angle) * ry,
-          note: noteFor(id, parsed),
-          final: parsed.finals.has(id)
-        };
+      const ranks = new Map();
+      ordered.forEach(state => {
+        const key = rank.get(state);
+        if (!ranks.has(key)) ranks.set(key, []);
+        ranks.get(key).push(state);
+      });
+
+      const rankKeys = [...ranks.keys()].sort((a, b) => a - b);
+      const maxRows = Math.max(...rankKeys.map(key => ranks.get(key).length));
+      const colGap = Math.max(210, Math.min(270, 1800 / Math.max(1, rankKeys.length)));
+      const rowGap = 150;
+      const width = Math.max(900, 180 + (rankKeys.length - 1) * colGap + 180);
+      const height = Math.max(680, 180 + Math.max(0, maxRows - 1) * rowGap + 180);
+      const rankIndex = new Map(rankKeys.map((key, index) => [key, index]));
+
+      graphBounds = { width, height };
+      return ordered.map(id => {
+        const group = ranks.get(rank.get(id));
+        const row = group.indexOf(id);
+        const x = 120 + rankIndex.get(rank.get(id)) * colGap;
+        const y = height / 2 + (row - (group.length - 1) / 2) * rowGap;
+        return { id, x, y, note: noteFor(id, parsed), final: parsed.finals.has(id), rank: rank.get(id) };
       });
     }
 
@@ -835,61 +1127,200 @@ q11 b q11`
       return { x: sum.x / placedStates.length, y: sum.y / placedStates.length };
     }
 
-    function pointAlong(from, to, distance) {
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
+    function pointToward(node, targetX, targetY, distance) {
+      const dx = targetX - node.x;
+      const dy = targetY - node.y;
       const len = Math.hypot(dx, dy) || 1;
-      return { x: from.x + (dx / len) * distance, y: from.y + (dy / len) * distance };
+      return { x: node.x + (dx / len) * distance, y: node.y + (dy / len) * distance };
     }
 
     function buildEdges(parsed, placedStates) {
       const byState = new Map(placedStates.map(state => [state.id, state]));
-      const grouped = new Map();
+      const groupedMap = new Map();
       parsed.states.forEach(from => {
         parsed.alphabet.forEach(symbol => {
           const to = parsed.delta[from][symbol];
-          const key = `${from} ${to}`;
-          if (!grouped.has(key)) grouped.set(key, { from, to, symbols: [] });
-          grouped.get(key).symbols.push(symbol);
+          const key = `${from}|${to}`;
+          if (!groupedMap.has(key)) groupedMap.set(key, { from, to, symbols: [] });
+          groupedMap.get(key).symbols.push(symbol);
         });
       });
 
-      const pairCounts = new Map();
-      return [...grouped.values()].map(edge => {
-        const from = byState.get(edge.from);
-        const to = byState.get(edge.to);
-        const label = edge.symbols.join(',');
+      function nearestStateDistance(x, y, skipA, skipB) {
+        let min = Infinity;
+        for (const s of placedStates) {
+          if (s.id === skipA || s.id === skipB) continue;
+          const d = Math.hypot(s.x - x, s.y - y);
+          if (d < min) min = d;
+        }
+        return min;
+      }
+
+      function sampleCurveClearance(aPt, ctrlX, ctrlY, bPt, skipA, skipB) {
+        const ts = [0.15, 0.3, 0.5, 0.7, 0.85];
+        let min = Infinity;
+        for (const t of ts) {
+          const it = 1 - t;
+          const x = it * it * aPt.x + 2 * it * t * ctrlX + t * t * bPt.x;
+          const y = it * it * aPt.y + 2 * it * t * ctrlY + t * t * bPt.y;
+          const d = nearestStateDistance(x, y, skipA, skipB);
+          if (d < min) min = d;
+        }
+        return min;
+      }
+
+      let centerX = 0, centerY = 0;
+      for (const s of placedStates) { centerX += s.x; centerY += s.y; }
+      centerX /= Math.max(1, placedStates.length);
+      centerY /= Math.max(1, placedStates.length);
+      const startNode = byState.get(parsed.start);
+      const startArrowAngle = startNode
+        ? (Math.atan2(startNode.y - centerY, startNode.x - centerX) || Math.PI)
+        : null;
+
+      const neighborCache = new Map();
+      function neighborDirsFor(stateId) {
+        if (neighborCache.has(stateId)) return neighborCache.get(stateId);
+        const node = byState.get(stateId);
+        const dirs = [];
+        groupedMap.forEach(g => {
+          if (g.from === g.to) return;
+          if (g.from === stateId) {
+            const o = byState.get(g.to);
+            if (o) dirs.push(Math.atan2(o.y - node.y, o.x - node.x));
+          } else if (g.to === stateId) {
+            const o = byState.get(g.from);
+            if (o) dirs.push(Math.atan2(o.y - node.y, o.x - node.x));
+          }
+        });
+        if (stateId === parsed.start && startArrowAngle !== null) {
+          dirs.push(startArrowAngle);
+        }
+        neighborCache.set(stateId, dirs);
+        return dirs;
+      }
+
+      function pickSelfLoopAngle(node, neighborDirs) {
+        const loopR = R + 60;
+        let bestAngle = -Math.PI / 2;
+        let bestScore = -Infinity;
+        for (let k = 0; k < 24; k++) {
+          const angle = -Math.PI + (k * Math.PI) / 12;
+          let neighborDelta = Math.PI;
+          for (const d of neighborDirs) {
+            let diff = angle - d;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            const ad = Math.abs(diff);
+            if (ad < neighborDelta) neighborDelta = ad;
+          }
+          const probeX = node.x + Math.cos(angle) * loopR;
+          const probeY = node.y + Math.sin(angle) * loopR;
+          const stateClearance = nearestStateDistance(probeX, probeY, node.id, null);
+          const proximityPenalty = stateClearance < 2 * R ? (2 * R - stateClearance) * 0.06 : 0;
+          const verticalPref = -Math.abs(Math.sin(angle + Math.PI / 2)) * 0.04;
+          const score = neighborDelta + verticalPref - proximityPenalty;
+          if (score > bestScore) { bestScore = score; bestAngle = angle; }
+        }
+        return bestAngle;
+      }
+
+      function baseAmp(dist, kind) {
+        if (kind === 'reverse') return Math.min(120, Math.max(54, dist * 0.27));
+        if (kind === 'sameRank') return Math.min(108, Math.max(50, dist * 0.36));
+        return Math.min(100, Math.max(24, dist * 0.18));
+      }
+
+      function buildSidedCurve(side, A, B, normalX, normalY, dist, kind, fromNode, toNode) {
+        const base = baseAmp(dist, kind);
+        const minAmp = Math.max(20, base * 0.32);
+        const maxAmp = Math.max(base * 3 + 80, dist * 0.85);
+        const step = Math.max(18, base * 0.16);
+        const trials = [];
+        for (let amp = minAmp; amp <= maxAmp; amp += step) {
+          const ctrlX = (A.x + B.x) / 2 + normalX * amp * side;
+          const ctrlY = (A.y + B.y) / 2 + normalY * amp * side;
+          const aPt = pointToward(fromNode, ctrlX, ctrlY, R + 4);
+          const bPt = pointToward(toNode, ctrlX, ctrlY, R + 9);
+          const clear = sampleCurveClearance(aPt, ctrlX, ctrlY, bPt, fromNode.id, toNode.id);
+          trials.push({ side, amp, ctrlX, ctrlY, a: aPt, b: bPt, clear });
+        }
+        const threshold = R + 22;
+        const safe = trials.filter(t => t.clear >= threshold);
+        if (safe.length > 0) {
+          safe.sort((a, b) => Math.abs(a.amp - base) - Math.abs(b.amp - base));
+          return safe[0];
+        }
+        trials.sort((a, b) => b.clear - a.clear);
+        return trials[0];
+      }
+
+      const results = [];
+      for (const edge of groupedMap.values()) {
+        const fromNode = byState.get(edge.from);
+        const toNode = byState.get(edge.to);
+        const label = edge.symbols.join(SYMBOL_JOIN);
         const id = `${edge.from}-${label}-${edge.to}`;
 
         if (edge.from === edge.to) {
-          const angle = Math.atan2(from.y - graphCenter(placedStates).y, from.x - graphCenter(placedStates).x) || -Math.PI / 2;
-          const ux = Math.cos(angle);
-          const uy = Math.sin(angle);
-          const left = { x: from.x + -uy * 26 + ux * 16, y: from.y + ux * 26 + uy * 16 };
-          const right = { x: from.x + uy * 26 + ux * 16, y: from.y + -ux * 26 + uy * 16 };
-          const c1 = { x: from.x + ux * 130 - uy * 88, y: from.y + uy * 130 + ux * 88 };
-          const c2 = { x: from.x + ux * 130 + uy * 88, y: from.y + uy * 130 - ux * 88 };
-          return { id, from: edge.from, to: edge.to, label, path: `M${left.x} ${left.y} C${c1.x} ${c1.y} ${c2.x} ${c2.y} ${right.x} ${right.y}`, labelX: from.x + ux * 132, labelY: from.y + uy * 132 };
+          const angle = pickSelfLoopAngle(fromNode, neighborDirsFor(edge.from));
+          const spread = 0.42;
+          const innerR = R + 6;
+          const outerR = R + 66;
+          const start = { x: fromNode.x + Math.cos(angle - spread) * innerR, y: fromNode.y + Math.sin(angle - spread) * innerR };
+          const end = { x: fromNode.x + Math.cos(angle + spread) * innerR, y: fromNode.y + Math.sin(angle + spread) * innerR };
+          const c1 = { x: fromNode.x + Math.cos(angle - 0.7) * outerR, y: fromNode.y + Math.sin(angle - 0.7) * outerR };
+          const c2 = { x: fromNode.x + Math.cos(angle + 0.7) * outerR, y: fromNode.y + Math.sin(angle + 0.7) * outerR };
+          const apexX = 0.125 * start.x + 0.375 * c1.x + 0.375 * c2.x + 0.125 * end.x;
+          const apexY = 0.125 * start.y + 0.375 * c1.y + 0.375 * c2.y + 0.125 * end.y;
+          const labelX = apexX;
+          const labelY = apexY;
+          results.push({
+            id, from: edge.from, to: edge.to, label,
+            path: `M${start.x.toFixed(2)} ${start.y.toFixed(2)} C${c1.x.toFixed(2)} ${c1.y.toFixed(2)} ${c2.x.toFixed(2)} ${c2.y.toFixed(2)} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`,
+            labelX, labelY
+          });
+          continue;
         }
 
-        const unordered = [edge.from, edge.to].sort().join('|');
-        const lane = pairCounts.get(unordered) || 0;
-        pairCounts.set(unordered, lane + 1);
-        const a = pointAlong(from, to, R + 5);
-        const b = pointAlong(to, from, R + 9);
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const len = Math.hypot(dx, dy) || 1;
-        const nx = -dy / len;
-        const ny = dx / len;
-        const reverseExists = grouped.has(`${edge.to} ${edge.from}`);
-        const curve = reverseExists ? (lane % 2 === 0 ? 92 : -92) : Math.min(84, Math.max(28, len * 0.14));
-        const mx = (a.x + b.x) / 2;
-        const my = (a.y + b.y) / 2;
-        const cx = mx + nx * curve;
-        const cy = my + ny * curve;
-        return { id, from: edge.from, to: edge.to, label, path: `M${a.x} ${a.y} Q${cx} ${cy} ${b.x} ${b.y}`, labelX: cx, labelY: cy };
-      });
+        const reverseExists = groupedMap.has(`${edge.to}|${edge.from}`);
+        const sortedIds = [edge.from, edge.to].slice().sort();
+        const A = byState.get(sortedIds[0]);
+        const B = byState.get(sortedIds[1]);
+        const cdx = B.x - A.x;
+        const cdy = B.y - A.y;
+        const clen = Math.hypot(cdx, cdy) || 1;
+        const canonNx = -cdy / clen;
+        const canonNy = cdx / clen;
+        const dist = clen;
+        const sameRank = fromNode.rank === toNode.rank;
+
+        let chosen;
+        if (reverseExists) {
+          const side = sortedIds[0] === edge.from ? 1 : -1;
+          chosen = buildSidedCurve(side, A, B, canonNx, canonNy, dist, 'reverse', fromNode, toNode);
+        } else {
+          const kind = sameRank ? 'sameRank' : 'normal';
+          const posCurve = buildSidedCurve(1, A, B, canonNx, canonNy, dist, kind, fromNode, toNode);
+          const negCurve = buildSidedCurve(-1, A, B, canonNx, canonNy, dist, kind, fromNode, toNode);
+          if (posCurve.clear > negCurve.clear + 4) chosen = posCurve;
+          else if (negCurve.clear > posCurve.clear + 4) chosen = negCurve;
+          else chosen = posCurve.amp <= negCurve.amp ? posCurve : negCurve;
+        }
+
+        const { ctrlX, ctrlY, a, b } = chosen;
+        const apexX = 0.25 * a.x + 0.5 * ctrlX + 0.25 * b.x;
+        const apexY = 0.25 * a.y + 0.5 * ctrlY + 0.25 * b.y;
+
+        results.push({
+          id, from: edge.from, to: edge.to, label,
+          path: `M${a.x.toFixed(2)} ${a.y.toFixed(2)} Q${ctrlX.toFixed(2)} ${ctrlY.toFixed(2)} ${b.x.toFixed(2)} ${b.y.toFixed(2)}`,
+          labelX: apexX,
+          labelY: apexY
+        });
+      }
+
+      return results;
     }
 
     function applyTransform() {
@@ -900,10 +1331,17 @@ q11 b q11`
     function fitView() {
       const xs = states.map(state => state.x);
       const ys = states.map(state => state.y);
-      const minX = Math.min(...xs) - 180;
-      const maxX = Math.max(...xs) + 180;
-      const minY = Math.min(...ys) - 180;
-      const maxY = Math.max(...ys) + 180;
+      edges.forEach(edge => {
+        const nums = edge.path.match(/-?\d+(?:\.\d+)?/g) || [];
+        for (let i = 0; i + 1 < nums.length; i += 2) {
+          xs.push(parseFloat(nums[i]));
+          ys.push(parseFloat(nums[i + 1]));
+        }
+      });
+      const minX = Math.min(...xs) - 90;
+      const maxX = Math.max(...xs) + 90;
+      const minY = Math.min(...ys) - 90;
+      const maxY = Math.max(...ys) + 90;
       const scale = Math.min(1.45, 820 / (maxX - minX), 600 / (maxY - minY));
       view = { x: 450 - ((minX + maxX) / 2) * scale, y: 340 - ((minY + maxY) / 2) * scale, scale };
       applyTransform();
@@ -916,7 +1354,43 @@ q11 b q11`
     }
 
     function edgeFor(from, symbol, to) {
-      return edges.find(edge => edge.from === from && edge.to === to && edge.label.split(',').includes(symbol));
+      return edges.find(edge => edge.from === from && edge.to === to && edge.label.split(SYMBOL_JOIN).includes(symbol));
+    }
+
+    function renderGrid() {
+      gridLayer.innerHTML = '';
+      const width = graphBounds.width + 400;
+      const height = graphBounds.height + 400;
+      const startX = -200;
+      const startY = -200;
+      for (let x = startX; x <= width; x += 20) {
+        const line = document.createElementNS(NS, 'line');
+        line.setAttribute('class', `grid-line${x % 100 === 0 ? ' major' : ''}`);
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', startY);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', height);
+        gridLayer.appendChild(line);
+      }
+      for (let y = startY; y <= height; y += 20) {
+        const line = document.createElementNS(NS, 'line');
+        line.setAttribute('class', `grid-line${y % 100 === 0 ? ' major' : ''}`);
+        line.setAttribute('x1', startX);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', width);
+        line.setAttribute('y2', y);
+        gridLayer.appendChild(line);
+      }
+      for (let x = 0; x <= graphBounds.width; x += 100) {
+        for (let y = 0; y <= graphBounds.height; y += 100) {
+          const dot = document.createElementNS(NS, 'circle');
+          dot.setAttribute('class', 'grid-dot');
+          dot.setAttribute('cx', x);
+          dot.setAttribute('cy', y);
+          dot.setAttribute('r', 1.6);
+          gridLayer.appendChild(dot);
+        }
+      }
     }
 
     function renderEdges() {
@@ -1008,11 +1482,36 @@ q11 b q11`
         sub.textContent = state.note;
 
         group.append(label, sub);
-        group.addEventListener('click', event => {
+        group.addEventListener('pointerdown', event => {
           event.stopPropagation();
-          selectedState = selectedState === state.id ? null : state.id;
-          applyViewState();
+          const p = svgPoint(event);
+          nodeDrag = { id: state.id, offsetX: state.x - p.x, offsetY: state.y - p.y, moved: false };
+          try { group.setPointerCapture(event.pointerId); } catch {}
         });
+        group.addEventListener('pointermove', event => {
+          if (!nodeDrag || nodeDrag.id !== state.id) return;
+          const p = svgPoint(event);
+          const nx = p.x + nodeDrag.offsetX;
+          const ny = p.y + nodeDrag.offsetY;
+          if (!nodeDrag.moved && Math.hypot(nx - state.x, ny - state.y) > 3) nodeDrag.moved = true;
+          if (nodeDrag.moved) {
+            state.x = nx;
+            state.y = ny;
+            moveNodeDom(state);
+            rerouteAndRedrawEdges();
+          }
+        });
+        group.addEventListener('pointerup', event => {
+          const wasDrag = nodeDrag && nodeDrag.id === state.id && nodeDrag.moved;
+          try { group.releasePointerCapture(event.pointerId); } catch {}
+          nodeDrag = null;
+          event.stopPropagation();
+          if (!wasDrag) {
+            selectedState = selectedState === state.id ? null : state.id;
+            applyViewState();
+          }
+        });
+        group.addEventListener('pointercancel', () => { nodeDrag = null; });
         group.addEventListener('keydown', event => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -1069,6 +1568,7 @@ q11 b q11`
     function renderGraph() {
       states = layoutStates(model);
       edges = buildEdges(model, states);
+      renderGrid();
       renderEdges();
       renderStartArrow();
       renderNodes();
@@ -1082,6 +1582,7 @@ q11 b q11`
     }
 
     function applyViewState() {
+      const reading = Boolean(readingFromState || readingToState);
       document.querySelectorAll('.edge').forEach(group => {
         const isIncoming = selectedState && group.dataset.to === selectedState;
         const isActive = activeEdge && group.dataset.edgeId === activeEdge;
@@ -1093,27 +1594,110 @@ q11 b q11`
       document.querySelectorAll('.node').forEach(group => {
         const id = group.dataset.state;
         const isSelected = selectedState === id;
-        const isCurrent = currentState === id && !finalMode;
+        const isReadingFrom = readingFromState === id;
+        const isTarget = readingToState === id && readingFromState !== id;
+        const isCurrent = !reading && currentState === id && !finalMode;
         const isAccepted = finalMode === 'accepted' && id === currentState;
         const isRejected = finalMode === 'rejected' && id === currentState;
-        group.classList.toggle('selected', isSelected);
+        group.classList.toggle('selected', isSelected && !reading);
         group.classList.toggle('current', isCurrent);
+        group.classList.toggle('reading', isReadingFrom);
+        group.classList.toggle('target', isTarget);
         group.classList.toggle('accepted', isAccepted);
         group.classList.toggle('rejected', isRejected);
-        group.classList.toggle('dim', Boolean(selectedState) && !isSelected && !isCurrent && !isAccepted && !isRejected);
+        group.classList.toggle('dim', Boolean(selectedState) && !reading && !isSelected && !isCurrent && !isAccepted && !isRejected);
       });
 
-      selectionLabel.textContent = selectedState ? `Incoming arrows to ${selectedState}` : 'No state selected';
+      selectionLabel.textContent = selectedState ? `Incoming arrows to ${selectedState}` : (reading ? `Reading: ${readingFromState} → ${readingToState}` : 'No state selected');
       window.viewportTransform = view;
     }
 
-    function setTrace(chars, doneCount) {
+    function setTrace(chars, doneCount, nowIndex) {
       trace.innerHTML = '';
       chars.forEach((char, index) => {
         const span = document.createElement('span');
-        span.className = `token${index < doneCount ? ' done' : ''}`;
-        span.textContent = char;
+        const cls = ['token'];
+        if (index === nowIndex) cls.push('now');
+        else if (index < doneCount) cls.push('done');
+        span.className = cls.join(' ');
+        span.textContent = char || 'ε';
         trace.appendChild(span);
+      });
+      if (!chars.length) {
+        const span = document.createElement('span');
+        span.className = 'token';
+        span.textContent = 'ε';
+        span.title = 'empty string';
+        trace.appendChild(span);
+      }
+    }
+
+    function setStepMeter(currentStep, total) {
+      if (!stepMeterText || !stepMeterFill) return;
+      const safeTotal = Math.max(0, total);
+      const safeStep = Math.max(0, Math.min(currentStep, safeTotal));
+      stepMeterText.textContent = `Step ${safeStep} / ${safeTotal}`;
+      const pct = safeTotal === 0 ? 0 : (safeStep / safeTotal) * 100;
+      stepMeterFill.style.width = pct + '%';
+    }
+
+    function clearTravelLayer() {
+      while (travelLayer.firstChild) travelLayer.removeChild(travelLayer.firstChild);
+    }
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function animateAlongEdge(edgeId, ms, token) {
+      return new Promise(resolve => {
+        const group = edgeLayer.querySelector(`.edge[data-edge-id="${CSS.escape(edgeId)}"]`);
+        if (!group) { resolve(); return; }
+        const path = group.querySelector('.edge-path');
+        if (!path || typeof path.getTotalLength !== 'function') {
+          setTimeout(resolve, ms);
+          return;
+        }
+        const len = path.getTotalLength();
+        if (!isFinite(len) || len <= 0) { resolve(); return; }
+        clearTravelLayer();
+        const trail = document.createElementNS(NS, 'circle');
+        trail.setAttribute('class', 'travel-trail');
+        trail.setAttribute('r', 16);
+        travelLayer.appendChild(trail);
+        const dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('class', 'travel-dot');
+        dot.setAttribute('r', 8);
+        travelLayer.appendChild(dot);
+        const arrow = document.createElementNS(NS, 'path');
+        arrow.setAttribute('class', 'travel-arrow');
+        arrow.setAttribute('d', 'M-12 -7 L0 0 L-12 7 L-8 0 Z');
+        travelLayer.appendChild(arrow);
+        const TIP_LEAD = 11;
+        const start = performance.now();
+        function tick(now) {
+          if (token !== runToken) { clearTravelLayer(); resolve(); return; }
+          const raw = Math.min(1, (now - start) / ms);
+          const t = easeInOutCubic(raw);
+          const dist = t * len;
+          const pt = path.getPointAtLength(dist);
+          dot.setAttribute('cx', pt.x);
+          dot.setAttribute('cy', pt.y);
+          const tipDist = Math.min(len, dist + TIP_LEAD);
+          const tailDist = Math.max(0, tipDist - 4);
+          const tipPt = path.getPointAtLength(tipDist);
+          const tailPt = path.getPointAtLength(tailDist);
+          const angle = Math.atan2(tipPt.y - tailPt.y, tipPt.x - tailPt.x) * 180 / Math.PI;
+          arrow.setAttribute('transform', `translate(${tipPt.x.toFixed(2)} ${tipPt.y.toFixed(2)}) rotate(${angle.toFixed(2)})`);
+          const trailT = Math.max(0, t - 0.12);
+          const trailPt = path.getPointAtLength(trailT * len);
+          trail.setAttribute('cx', trailPt.x);
+          trail.setAttribute('cy', trailPt.y);
+          trail.setAttribute('opacity', String(0.32 * (1 - raw)));
+          if (raw < 1) requestAnimationFrame(tick);
+          else { clearTravelLayer(); resolve(); }
+        }
+        requestAnimationFrame(tick);
       });
     }
 
@@ -1127,15 +1711,30 @@ q11 b q11`
       currentState = model.start;
       activeEdge = null;
       finalMode = null;
+      readingFromState = null;
+      readingToState = null;
+      activeSymbolIndex = -1;
+      clearTravelLayer();
       runButton.disabled = false;
-      setTrace([...input.value.trim()], 0);
+      const chars = [...input.value.trim()];
+      setTrace(chars, 0, -1);
+      setStepMeter(0, chars.length);
       statusTitle.textContent = `Ready at ${model.start}`;
-      statusText.textContent = `Current DFA has ${model.states.length} states and ${model.alphabet.length} input symbols.`;
+      statusText.innerHTML = `<span class="state-tag">${escapeHtml(model.start)}</span> selected as start. Press <strong>Run</strong> to read the input symbol by symbol.`;
       applyViewState();
     }
 
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function stepInterval() {
+      const v = parseFloat(runSpeed && runSpeed.value);
+      return Number.isFinite(v) ? v : 720;
+    }
+
+    function updateSpeedLabel() {
+      if (runSpeedValue) runSpeedValue.textContent = stepInterval() + ' ms / symbol';
     }
 
     async function runInput() {
@@ -1144,9 +1743,14 @@ q11 b q11`
         finalMode = 'rejected';
         currentState = model.start;
         activeEdge = null;
+        readingFromState = null;
+        readingToState = null;
+        activeSymbolIndex = -1;
+        clearTravelLayer();
         statusTitle.textContent = 'Invalid input';
-        statusText.textContent = `Use only: ${model.alphabet.join(', ')}.`;
-        setTrace([...value], 0);
+        statusText.innerHTML = `Use only symbols: <span class="state-tag">${escapeHtml(model.alphabet.join(' '))}</span>.`;
+        setTrace([...value], 0, -1);
+        setStepMeter(0, [...value].length);
         applyViewState();
         return;
       }
@@ -1159,12 +1763,19 @@ q11 b q11`
       currentState = model.start;
       finalMode = null;
       activeEdge = null;
+      readingFromState = null;
+      readingToState = null;
+      clearTravelLayer();
       const chars = [...value];
-      setTrace(chars, 0);
-      statusTitle.textContent = `Running from ${model.start}`;
-      statusText.textContent = value ? 'Following one transition per input symbol.' : 'Empty string: no transition taken.';
+      setTrace(chars, 0, -1);
+      setStepMeter(0, chars.length);
+      statusTitle.textContent = `Start at ${model.start}`;
+      statusText.innerHTML = chars.length
+        ? `Reading <strong>${chars.length}</strong> symbol${chars.length === 1 ? '' : 's'} from <span class="state-tag">${escapeHtml(model.start)}</span>.`
+        : `Empty string ε. No transition taken; checking acceptance at <span class="state-tag">${escapeHtml(model.start)}</span>.`;
       applyViewState();
-      await sleep(450);
+      const step = stepInterval();
+      await sleep(Math.round(step * 0.55));
 
       for (let i = 0; i < chars.length; i += 1) {
         if (token !== runToken) return;
@@ -1173,21 +1784,43 @@ q11 b q11`
         const to = model.delta[from][symbol];
         const edge = edgeFor(from, symbol, to);
         activeEdge = edge.id;
-        statusTitle.textContent = `${from} --${symbol}--> ${to}`;
-        statusText.textContent = `Reading symbol ${i + 1} of ${chars.length}.`;
+        activeSymbolIndex = i;
+        readingFromState = from;
+        readingToState = to;
+        statusTitle.innerHTML = `<span class="state-tag">${escapeHtml(from)}</span><span class="arrow-glyph">→</span><span class="state-tag">${escapeHtml(to)}</span>`;
+        statusText.innerHTML = `Step <strong>${i + 1}</strong> / ${chars.length} — read <span class="symbol-pill">${escapeHtml(symbol)}</span> from <span class="state-tag">${escapeHtml(from)}</span>.`;
+        setTrace(chars, i, i);
+        setStepMeter(i, chars.length);
         applyViewState();
-        await sleep(720);
+        const travelMs = Math.max(160, Math.round(stepInterval() * 0.85));
+        await animateAlongEdge(edge.id, travelMs, token);
+        if (token !== runToken) return;
         currentState = to;
         activeEdge = null;
-        setTrace(chars, i + 1);
+        readingFromState = null;
+        readingToState = null;
+        activeSymbolIndex = -1;
+        setTrace(chars, i + 1, -1);
+        setStepMeter(i + 1, chars.length);
         applyViewState();
-        await sleep(280);
+        await sleep(Math.round(stepInterval() * 0.35));
       }
 
       if (token !== runToken) return;
       finalMode = model.finals.has(currentState) ? 'accepted' : 'rejected';
-      statusTitle.textContent = finalMode === 'accepted' ? `Accepted in ${currentState}` : `Rejected in ${currentState}`;
-      statusText.textContent = finalMode === 'accepted' ? 'The input ended in a final state.' : 'The input ended outside the final-state set.';
+      const verdict = finalMode === 'accepted' ? 'Accepted' : 'Rejected';
+      const safeCurrent = escapeHtml(currentState);
+      statusTitle.innerHTML = `${verdict} at <span class="state-tag">${safeCurrent}</span>`;
+      if (chars.length) {
+        statusText.innerHTML = finalMode === 'accepted'
+          ? `Input ended at final state <span class="state-tag">${safeCurrent}</span>. String is in language.`
+          : `Input ended at non-final state <span class="state-tag">${safeCurrent}</span>. String is rejected.`;
+      } else {
+        statusText.innerHTML = finalMode === 'accepted'
+          ? `Empty string ε ended at final start state <span class="state-tag">${safeCurrent}</span>. Accepted.`
+          : `Empty string ε ended at non-final start state <span class="state-tag">${safeCurrent}</span>. Rejected.`;
+      }
+      setStepMeter(chars.length, chars.length);
       running = false;
       runButton.disabled = false;
       applyViewState();
@@ -1265,6 +1898,10 @@ q11 b q11`
     zoomInButton.addEventListener('click', () => zoomBy(1.18));
     zoomOutButton.addEventListener('click', () => zoomBy(0.84));
     input.addEventListener('input', () => { if (!running) resetRunState(); });
+    if (runSpeed) {
+      runSpeed.addEventListener('input', updateSpeedLabel);
+      updateSpeedLabel();
+    }
 
     populatePresetSelect();
     loadPreset(PRESETS[0].id);

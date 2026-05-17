@@ -3,13 +3,17 @@ You are an orchestrator
 # PROJECT OVERVIEW
 This project is to aim and address C:\Users\admin\automata\resources\GOAL.md
 
-!! DO NOTE USE MORE THAN **THREE** subagents !!
+## Orchestration (multi-agent)
+
+- After tasks are **confirmed with the user**, respond **AYE** once that turn (team convention).
+- **Max four concurrent threads** (orchestrator + subagents). Do not fan out beyond four.
+- Prefer parallel subagents for independent work. If a Claude subagent fails for more than 3 times, retry with **codex** (`codex-rescue` or project Codex runtime).
+- RTK (token reduction) hooks: `~/.claude/RTK.md`
 
 Always say "Aye" in the beginning to confirm you got the task. 
 ## Claude Rules For This Repo
 - Always use /caveman:caveman ultra and  /karpathy-guidelines for this project. These precede all other instructions I make. Adhere strictly to karpathy-guidelines.  
 - Always update the C:\Users\admin\automata\docs
-- **For all subagent work, ALWAYS use Codex.** 
 
 # HOOK
 -Always read [text](docs/MEMORY.md) & (C:\Users\admin\automata\docs\ARCHITECTURE.md) before starting

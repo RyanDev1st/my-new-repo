@@ -43,15 +43,58 @@ automata/
 
 **Technology**: Self-contained HTML/CSS/JS — no dependencies, opens directly in any browser.
 
-**Current isolated rewrite** (`src/task1/index.v2.html`, updated 2026-05-13):
+**Current isolated rewrite** (`src/task1/index.v2.html`, updated 2026-05-17):
 - Minimal DFA page focused on graph clarity and direct homework demonstration of DFA String Acceptance.
 - Full graph stays visible and is generated from a complete transition-table textarea. Input format uses `states`, `alphabet`, `start`, `finals`, then transition rows like `q0 a q1`; `finals -` means no accepting states.
 - Run panel validates each input symbol against the current alphabet, animates one transition per symbol, updates trace tokens, and marks accepted/rejected terminal state based on the current final-state set.
-- Graph lives inside a pannable SVG canvas with a subtle grey reference grid: drag empty canvas to pan larger automata, wheel or buttons zoom, and `Fit graph` recenters the generated layout.
+- Graph lives inside a pannable SVG canvas with a subtle grey reference grid rendered inside the same transformed SVG viewport: drag empty canvas to pan larger automata, wheel or buttons zoom, and `Fit graph` recenters the generated layout (fit now includes the full curve extents so long backward arcs are never clipped).
 - Node click interaction is preserved for homework readability: clicking a state highlights only arrows pointing to that state and fades the rest; clicking the same state or empty graph space restores the full graph.
-- Renderer groups identical `(from, to)` transitions into comma-separated labels, lays states around a generated ellipse, routes self-loops outward, and separates reverse pairs with opposite quadratic curves.
+- Renderer uses a directed ranked layout inspired by Graphviz `dot`: breadth-first ranks flow outward from the start state, states are spaced in rank columns, and multi-symbol labels use a compact `a · b` style instead of comma blobs.
 - The in-page `Test case preset` selector loads seven audit cases from easy to extreme: substring `abb`, reverse pair, self-loop mix, 6-state ring, 8-state crossing mesh, 10-state dense paired mesh, and 12-state large sample.
-- Browser verification used Chrome headless screenshots `docs/chrome-task1-v2-dynamic.png` and `docs/chrome-task1-v2-presets-grid.png`, static JS checks, and Chrome DevTools Protocol checks. Verified: all seven presets load with no table errors, generated graphs range from 4 states/7 grouped edges to 12 states/23 grouped edges, grey grid renders, and zoom changes the viewport transform. Earlier dynamic-graph verification confirmed q7 click checks highlight only incoming q7 edges.
+
+**Edge routing algorithm** (rewritten 2026-05-17 to fix overlap on dense graphs):
+- Edges between distinct states use a quadratic Bezier whose control point sits perpendicular to the canonical line from `min(from,to)` to `max(from,to)`. Each candidate "side" (positive vs negative perpendicular offset) is evaluated independently.
+- For every (from,to) pair, `buildSidedCurve` sweeps a range of amplitudes from `baseAmp(dist, kind) * 0.32` up to `max(baseAmp*3+80, dist*0.85)` in even steps. At each amplitude the curve is sampled at `t = 0.15, 0.30, 0.50, 0.70, 0.85` and the minimum distance to any non-endpoint state is computed (`sampleCurveClearance`).
+- The chosen amplitude is the one closest to `baseAmp` *among* amplitudes that achieve clearance ≥ `R + 22`; if none clear, the highest-clearance amplitude is returned. This finds the smallest visually pleasing bend that still keeps the curve outside every other node.
+- For reverse pairs (`A→B` and `B→A` both exist) the two curves are forced onto opposite sides of the canonical line by deterministic lex assignment (`sortedIds[0] === edge.from ? +1 : -1`). Because both curves use the *same* canonical normal, this guarantees they always render on opposite screen sides — the prior overlap bug (both directions curving the same way because each edge mirrored both `normal` and `curve` sign) is fixed.
+- For single-direction edges, both sides are evaluated and the side with greater clearance wins; ties break by smaller amplitude.
+- Endpoints (`a`, `b`) are clipped to each node ring along the line to the control point via `pointToward`, so the curve enters and exits tangent to the arrow rather than along the straight chord — arrowheads now align with the actual curve direction at the node ring.
+- Self-loops use a cubic Bezier whose anchor angle is chosen by `pickSelfLoopAngle`: it scans 24 candidate angles around the node and picks the one whose minimum angular distance to any neighbor edge direction is maximal, with a small penalty for angles that point at other nodes within `2R` and a faint preference for vertical placement.
+- Labels are positioned at the visual apex of each curve (`0.25·a + 0.5·C + 0.25·b` for quadratics; for self-loops the radial direction plus a small offset). The existing white halo (`stroke-width: 9px`) keeps labels readable when they sit over grid lines.
+- `fitView` now derives its bounds from every path control/endpoint point, not just node centers, so the auto-fit zoom always shows the full curve geometry (important for long backward edges whose apex can sit far above or below the rank layout).
+
+**Edge routing verification** (algorithmic, 2026-05-17):
+- Synthetic harness builds each preset model, runs `layoutStates` + `buildEdges`, samples each path at 200 points, and asserts no path passes within `R + 5` of a non-endpoint state.
+- All seven presets now pass: minimum curve clearance is 49.2px (loops-mix) and the typical clearance sits between 60-250px. Reverse-pair separation verified: all 17 reverse pairs across the presets have their control points on opposite screen-sides of the canonical line.
+- Earlier-known dense failures `q5→q0` (ring-six, was 37.7px) and `q4→q0` (hub-ten, was 22.2px) are now resolved.
+
+**Interaction & UX layer** (added 2026-05-17, TDD authored before implementation):
+- **Self-loop label on curve**: label position moved from `outerR + 14` (≈49px from the loop curve) to the cubic Bezier apex at t=0.5 (`0.125·a + 0.375·c1 + 0.375·c2 + 0.125·b`). Labels now sit on the loop like every other edge label, halo provides background contrast.
+- **Run speed slider**: `#run-speed` range input (100ms–2000ms, default 720ms, step 20ms) gates the symbol-by-symbol replay. `runInput` reads `stepInterval()` between every transition (initial pause = `step·0.6`, per-symbol pause = `step`, post-symbol settle = `step·0.4`). Label `#run-speed-value` updates live as the slider drags.
+- **Node dragging**: pointer-event handlers on each `.node` group capture the pointer, project screen coords into viewport-local space via `svgPoint(event)` (using `viewport.getScreenCTM().inverse()`), and rewrite the node's `(x, y)` in `states`. After each drag tick the routine calls `buildEdges` + `renderEdges` + `renderStartArrow` so curves track the dragged node live; the dragged node's DOM circles/labels are moved in place to keep pointer capture intact. Drag-vs-click is disambiguated by a 3px movement threshold (`nodeDrag.moved`); below the threshold pointerup still toggles selection like before, preserving the keyboard-accessible Enter/Space toggle.
+- **Cursor contrast**: `.graph-wrap` now uses a custom inline-SVG cursor (cream fill, dark stroke, with a dark/cream-stroke variant during `.dragging`) so the cursor stays visible against the off-white canvas. SVG children inherit the canvas cursor (`.graph-wrap svg * { cursor: inherit; }`) to prevent the default text I-beam over edge labels; nodes opt into `cursor: move` to advertise drag affordance.
+
+**Feature tests** (TDD, `src/task1/__tests__/feature_tests.js`):
+- Playwright-driven, runs against `file://` URL.
+- Covers: self-loop `labelToApex < 20px`; `#run-speed` exists as range input with sensible min/max/default; mouse drag on `.node[data-state="q1"]` moves the state more than 30-40px and keeps edge endpoints adjacent; computed cursor on `#graph-wrap` matches `grab|move|crosshair|pointer`.
+- Initial run (red): 6 / 12 failed (loop-label distance 49.1, missing slider, drag inert). Post-implementation (green): 12 / 12 pass.
+
+**Run-animation layer** (added 2026-05-17, isolated to `src/task1/index.v2.html`):
+- Particle traveler `#travel-layer > .travel-dot` rides the active edge using `path.getPointAtLength(t * totalLength)` over a `requestAnimationFrame` loop with `easeInOutCubic`. A fading `.travel-trail` circle trails ~12% behind the dot. A `.travel-arrow` chevron leads the dot by 11 px along the path with its rotation set from the local tangent (sampled at `tipDist - 4` ↔ `tipDist` on the path), so the arrow head turns through curves and self-loops as it travels. The static `marker-end` of the active edge is suppressed via `marker-end: none` on `.edge.active .edge-path` so the arrow head reads as moving with the dot rather than fixed at the destination ring. Travel duration is `max(160, step * 0.85)` ms; per-step settle pause is `step * 0.35`.
+- Source state pulses with `.node.reading` (orange ring, `ring-pulse` keyframes with stroke-width/drop-shadow swell). Destination previews with `.node.target` (dashed orange ring, `target-pulse` keyframes). Both classes only apply during the read phase; `current` highlight is suppressed while `readingFromState` or `readingToState` is set, so the source-vs-destination distinction is unambiguous.
+- Active edge gets `.edge.active` with a wider orange stroke, `stroke-dasharray: 14 8`, and `dash-flow` keyframe animation (700 ms linear loop) producing a directional "flowing dashes" cue. The active edge label upgrades to 17px / orange.
+- Step meter `#step-meter-text` + `#step-meter-fill` shows `Step n / N` with a progress bar that animates with `cubic-bezier(0.32, 0.72, 0, 1)` width transitions. Status title formats transitions as `q0 → q1` (state pills + orange arrow glyph); status text inserts the current symbol as a `.symbol-pill` orange capsule.
+- Trace tokens now carry three states: empty, `.token.now` (currently-being-read symbol — orange-fill pill with a `token-pulse` scale + shadow-ring keyframe), `.token.done` (already-read). Empty-string inputs render a single `ε` placeholder token.
+- Terminal verdicts trigger one-shot animations on the whole `.node` group: `accept-burst` scales 1.0 → 1.16 → 1.0 with a green drop-shadow on the ring; `reject-shake` translates the group ±6 / ±4 / ±3 px with a red drop-shadow on the ring. `transform-box: fill-box; transform-origin: center` keeps the animations centered on each node.
+- New state vars: `readingFromState`, `readingToState`, `activeSymbolIndex`. `applyViewState` toggles the new classes; `setTrace(chars, doneCount, nowIndex)` carries the now-index. `clearTravelLayer()` runs on reset/cancel and on token mismatch inside the rAF loop so a fresh Run never inherits a stale traveler.
+
+**Run-animation tests** (`src/task1/__tests__/anim_tests.js`, 22 cases):
+- Mid-run assertions while a step is in flight (slider 1400 ms): `.edge.active` count, `.node.reading=q0`, `.node.target=q1`, `#travel-layer .travel-dot` rendered, `.token.now` text = `a`, step meter labelled `Step 0 / 4`.
+- End-of-run assertions wait on `.node.accepted, .node.rejected` via `page.waitForFunction`: `aabb` accepts at q3 with status `Accepted` and step meter 100%; `aa` rejects at q1; empty input `ε` rejects at q0 with meter `Step 0 / 0`.
+- Difficulty-ladder coverage: the largest preset `large-twelve` is run at default-speed (720 ms) to confirm the traveler, reading/target pulses, and active-edge dash flow stay legible against 12-state graph density; assertions cover mid-run `.edge.active`, travel dot, reading + target classes, and end-of-run verdict + 100% fill.
+- All 22 cases pass. Existing 12 layout tests still pass. Screenshots `docs/anim-midrun.png`, `docs/anim-accepted.png`, `docs/anim-rejected.png`, `docs/anim-large-twelve-midrun.png` show the four representative states.
+
+**Security hardening**: status title / status text use `innerHTML` to render orange state-pill / symbol-pill markup. User-supplied state ids, alphabet symbols, and input symbols are routed through an `escapeHtml` helper before interpolation so a transition table with a state id like `<script>` cannot inject HTML into the status pane.
 
 **Original full editor features**:
 - User-editable DFA definition (alphabet, transitions, initial/final states)
